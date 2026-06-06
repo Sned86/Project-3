@@ -1284,14 +1284,19 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
   if (FACT_CACHE[clubId]) return FACT_CACHE[clubId];
 
   const R = 1600; // 1 mile in metres
-  // Query for train stations, bus stops, and car parks within radius
+  // Query for train stations (incl. Underground + Metro), pubs, supermarkets and car parks
   const query = `
     [out:json][timeout:10];
     (
       node["railway"="station"](around:${R},${lat},${lng});
       node["railway"="halt"](around:${R},${lat},${lng});
-      node["public_transport"="stop_position"]["train"="yes"](around:${R},${lat},${lng});
-      node["highway"="bus_stop"](around:${R},${lat},${lng});
+      node["station"="subway"](around:${R},${lat},${lng});
+      node["station"="light_rail"](around:${R},${lat},${lng});
+      node["network"="London Underground"](around:${R},${lat},${lng});
+      node["network"="Tyne and Wear Metro"](around:${R},${lat},${lng});
+      node["amenity"="pub"](around:${R},${lat},${lng});
+      node["amenity"="bar"](around:${R},${lat},${lng});
+      node["shop"="supermarket"](around:${R},${lat},${lng});
       node["amenity"="parking"](around:${R},${lat},${lng});
       way["amenity"="parking"](around:${R},${lat},${lng});
     );
@@ -1307,8 +1312,13 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
 
     const categorise = (el) => {
       const t = el.tags || {};
-      if (t.railway === 'station' || t.railway === 'halt' || (t.public_transport === 'stop_position' && t.train === 'yes')) return 'train';
-      if (t.highway === 'bus_stop') return 'bus';
+      if (
+        t.railway === 'station' || t.railway === 'halt' ||
+        t.station === 'subway' || t.station === 'light_rail' ||
+        t.network === 'London Underground' || t.network === 'Tyne and Wear Metro'
+      ) return 'train';
+      if (t.amenity === 'pub' || t.amenity === 'bar') return 'pub';
+      if (t.shop === 'supermarket') return 'supermarket';
       if (t.amenity === 'parking') return 'parking';
       return null;
     };
@@ -1321,22 +1331,22 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
     const elLat = (el) => el.lat ?? el.center?.lat;
     const elLng = (el) => el.lon ?? el.center?.lon;
 
-    const results = { train: [], bus: [], parking: [] };
+    const results = { train: [], pub: [], supermarket: [], parking: [] };
 
     data.elements.forEach(el => {
       const cat = categorise(el);
       if (!cat) return;
       const name = getName(el);
-      if (!name) return; // skip unnamed stops/parks
+      if (!name) return;
       const dist = haversineKm(lat, lng, elLat(el), elLng(el));
       results[cat].push({ name, dist });
     });
 
     // Sort each category by distance, keep top 3
-    ['train','bus','parking'].forEach(cat => {
+    ['train','pub','supermarket','parking'].forEach(cat => {
       results[cat] = results[cat]
         .sort((a, b) => a.dist - b.dist)
-        .filter((item, idx, arr) => arr.findIndex(x => x.name === item.name) === idx) // dedupe by name
+        .filter((item, idx, arr) => arr.findIndex(x => x.name === item.name) === idx)
         .slice(0, 3);
     });
 
@@ -1352,9 +1362,10 @@ function renderAmenityPanel(results, tc) {
   if (!results) return `<div class="fact-panel-none">Couldn't load nearby amenities.</div>`;
 
   const groups = [
-    { key: 'train',   label: '🚂 Train stations' },
-    { key: 'bus',     label: '🚌 Bus stops' },
-    { key: 'parking', label: '🅿️ Car parks' },
+    { key: 'train',       label: '🚂 Train stations' },
+    { key: 'pub',         label: '🍺 Pubs & bars' },
+    { key: 'supermarket', label: '🛒 Supermarkets' },
+    { key: 'parking',     label: '🅿️ Car parks' },
   ];
 
   let html = '';
@@ -1373,7 +1384,7 @@ function renderAmenityPanel(results, tc) {
     </div>`;
   });
 
-  if (!anyResults) return `<div class="fact-panel-none">No train stations, bus stops or car parks found within 1 mile.</div>`;
+  if (!anyResults) return `<div class="fact-panel-none">No train stations, pubs, supermarkets or car parks found within 1 mile.</div>`;
   return html;
 }
 
