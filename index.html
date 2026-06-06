@@ -1579,21 +1579,56 @@ let MODAL_CLUB_ID = null;
 const FACT_CACHE = {}; // keyed by club id
 
 /* ── OSM Overpass: fetch nearby amenities ── */
+
+// Option C: tag-based heritage filter (primary) + name blocklist (fallback)
+// Add to HERITAGE_STATION_BLOCKLIST any stations that slip through due to inconsistent OSM tagging
+const HERITAGE_STATION_BLOCKLIST = [
+  'avon riverside',
+  // add more as needed, all lowercase
+];
+
+// OSM usage/service tags that indicate heritage or tourist railways — not the national network
+const HERITAGE_USAGE_TAGS = new Set([
+  'tourism', 'leisure', 'military', 'industrial',
+]);
+const HERITAGE_SERVICE_TAGS = new Set([
+  'heritage', 'historic',
+]);
+
+function isHeritageStation(el) {
+  const t = el.tags || {};
+
+  // Primary gate: OSM usage/service tags
+  if (t.usage && HERITAGE_USAGE_TAGS.has(t.usage.toLowerCase())) return true;
+  if (t.service && HERITAGE_SERVICE_TAGS.has(t.service.toLowerCase())) return true;
+  if (t['railway:usage'] && HERITAGE_USAGE_TAGS.has(t['railway:usage'].toLowerCase())) return true;
+  if (t.heritage) return true;
+  if (t['historic:railway']) return true;
+
+  // Operator/network tag hints
+  const opNet = ((t.operator || '') + ' ' + (t.network || '')).toLowerCase();
+  if (opNet.match(/\b(heritage|steam|miniature|narrow.?gauge|light.?railway|preserved|tourist)\b/)) return true;
+
+  // Fallback: name blocklist
+  const name = (t.name || t['name:en'] || '').toLowerCase();
+  if (HERITAGE_STATION_BLOCKLIST.some(blocked => name.includes(blocked))) return true;
+
+  return false;
+}
+
 async function fetchNearbyAmenities(clubId, lat, lng) {
   if (FACT_CACHE[clubId]) return FACT_CACHE[clubId];
 
-  const R = 16093;       // 10 miles — all amenities
-  const R_TRAIN = 16093; // 10 miles — train stations
-  // Query for train stations (incl. Underground + Metro), pubs, supermarkets
+  const R = 16093; // 10 miles
   const query = `
     [out:json][timeout:15];
     (
-      node["railway"="station"](around:${R_TRAIN},${lat},${lng});
-      node["railway"="halt"](around:${R_TRAIN},${lat},${lng});
-      node["station"="subway"](around:${R_TRAIN},${lat},${lng});
-      node["station"="light_rail"](around:${R_TRAIN},${lat},${lng});
-      node["network"="London Underground"](around:${R_TRAIN},${lat},${lng});
-      node["network"="Tyne and Wear Metro"](around:${R_TRAIN},${lat},${lng});
+      node["railway"="station"](around:${R},${lat},${lng});
+      node["railway"="halt"](around:${R},${lat},${lng});
+      node["station"="subway"](around:${R},${lat},${lng});
+      node["station"="light_rail"](around:${R},${lat},${lng});
+      node["network"="London Underground"](around:${R},${lat},${lng});
+      node["network"="Tyne and Wear Metro"](around:${R},${lat},${lng});
       node["amenity"="pub"](around:${R},${lat},${lng});
       node["amenity"="bar"](around:${R},${lat},${lng});
       node["shop"="supermarket"](around:${R},${lat},${lng});
@@ -1641,6 +1676,8 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
       if (!cat) return;
       const name = getName(el);
       if (!name) return;
+      // Filter out heritage/steam railway stations
+      if (cat === 'train' && isHeritageStation(el)) return;
       // Filter supermarkets to major chains only
       if (cat === 'supermarket') {
         const nameLower = name.toLowerCase();
@@ -1650,7 +1687,7 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
       results[cat].push({ name, dist });
     });
 
-    // Sort each category by distance, keep top 3
+    // Sort by distance, dedupe by name, keep top 3
     ['train','pub','supermarket'].forEach(cat => {
       results[cat] = results[cat]
         .sort((a, b) => a.dist - b.dist)
