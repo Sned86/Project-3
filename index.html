@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -435,8 +437,9 @@
     .club-pill-tag { font-size: 12px; padding: 5px 12px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.65); }
     .club-pills-empty { font-size: 13px; color: rgba(255,255,255,0.25); font-style: italic; }
 
-    /* No-coords notice */
-    .club-no-coords { font-size: 13px; color: rgba(255,255,255,0.28); font-style: italic; line-height: 1.6; padding: 4px 0; }
+    /* Map section */
+    .club-map-wrap { width: 100%; height: 280px; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,0.04); position: relative; }
+    .club-map-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 13px; color: rgba(255,255,255,0.28); font-style: italic; }
   </style>
 </head>
 <body>
@@ -967,7 +970,7 @@ function buildClubPage(c) {
       <div class="club-section-body" id="club-nearby-body">
         ${hasCoords
           ? `<div class="club-amenity-loading" id="club-amenity-loading"><div class="club-amenity-spinner"></div>Finding nearby amenities…</div><div id="club-amenity-results" style="display:none"></div>`
-          : `<div class="club-no-coords">Location data for this ground hasn't been added yet — check back soon.</div>`
+          : `<div style="font-size:13px;color:rgba(255,255,255,0.28);font-style:italic;padding:4px 0">Location data for this ground hasn't been added yet — check back soon.</div>`
         }
       </div>
     </div>`;
@@ -1008,14 +1011,13 @@ function buildClubPage(c) {
         </div>
       </div>
 
-      <div class="club-section" style="background:rgba(255,255,255,0.02)">
-        <div class="club-section-header"><div class="club-section-title">Club Colours</div></div>
-        <div class="club-section-body" style="display:flex;align-items:center;gap:14px">
-          <div style="display:flex;gap:8px">
-            <div style="width:40px;height:40px;border-radius:50%;background:${c.colours.primary};border:2px solid rgba(255,255,255,0.12);flex-shrink:0"></div>
-            <div style="width:40px;height:40px;border-radius:50%;background:${c.colours.secondary};border:2px solid rgba(255,255,255,0.12);flex-shrink:0"></div>
-          </div>
-          <div style="font-size:13px;color:rgba(255,255,255,0.5)">${(c.colour_names || []).join(' &amp; ') || '—'}</div>
+      <div class="club-section">
+        <div class="club-section-header"><div class="club-section-title">Ground location</div></div>
+        <div class="club-section-body" style="padding:12px">
+          ${hasCoords
+            ? `<div class="club-map-wrap" id="club-map"></div>`
+            : `<div class="club-map-wrap"><div class="club-map-placeholder">No location data for this ground yet</div></div>`
+          }
         </div>
       </div>
 
@@ -1033,6 +1035,45 @@ function buildClubPage(c) {
       resultsEl.style.display = 'block';
       resultsEl.innerHTML = renderClubAmenities(results);
     });
+
+    // Initialise Leaflet map — defer a tick so the DOM is painted
+    setTimeout(() => {
+      const mapEl = document.getElementById('club-map');
+      if (!mapEl) return;
+      // Destroy any previous map instance on the element
+      if (mapEl._leaflet_id) {
+        mapEl._leaflet_id = null;
+        mapEl.innerHTML = '';
+      }
+      const map = L.map(mapEl, {
+        center: [c.lat, c.lng],
+        zoom: 15,
+        zoomControl: true,
+        scrollWheelZoom: false,
+        attributionControl: true,
+      });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+      // Custom marker using club primary colour
+      const markerHtml = `<div style="
+        width:18px;height:18px;border-radius:50%;
+        background:${c.colours.primary};
+        border:3px solid ${tc};
+        box-shadow:0 2px 8px rgba(0,0,0,0.45);
+      "></div>`;
+      const icon = L.divIcon({
+        html: markerHtml,
+        className: '',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+      });
+      L.marker([c.lat, c.lng], { icon })
+        .addTo(map)
+        .bindPopup(`<strong>${c.name}</strong><br>${c.ground || ''}`)
+        .openPopup();
+    }, 50);
   }
 }
 
