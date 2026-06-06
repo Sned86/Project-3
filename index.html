@@ -1001,12 +1001,12 @@ function buildClubPage(c) {
         <div class="club-section-header"><div class="club-section-title">Club &amp; Ground</div></div>
         <div class="club-section-body">
           <div class="club-facts-grid">
-            <div class="club-fact"><div class="club-fact-label">Ground</div><div class="club-fact-value">${c.ground || '—'}</div></div>
             <div class="club-fact"><div class="club-fact-label">Town</div><div class="club-fact-value">${c.town || '—'}${c.county ? ', ' + c.county : ''}</div></div>
+            <div class="club-fact"><div class="club-fact-label">Ground</div><div class="club-fact-value">${c.ground || '—'}</div></div>
+            <div class="club-fact"><div class="club-fact-label">Founded</div><div class="club-fact-value">${c.founded || '—'}</div></div>
+            <div class="club-fact"><div class="club-fact-label">Capacity</div><div class="club-fact-value">${c.capacity ? c.capacity.toLocaleString() : '—'}</div></div>
             <div class="club-fact"><div class="club-fact-label">League</div><div class="club-fact-value">${c.league}</div></div>
-            <div class="club-fact"><div class="club-fact-label">Step</div><div class="club-fact-value">Step ${c.step} of the pyramid</div></div>
-            ${c.founded ? `<div class="club-fact"><div class="club-fact-label">Founded</div><div class="club-fact-value">${c.founded}</div></div>` : ''}
-            ${c.capacity ? `<div class="club-fact"><div class="club-fact-label">Capacity</div><div class="club-fact-value">${c.capacity.toLocaleString()}</div></div>` : ''}
+            <div class="club-fact"><div class="club-fact-label">Step</div><div class="club-fact-value">Step ${c.step}</div></div>
           </div>
         </div>
       </div>
