@@ -371,6 +371,72 @@
     .rating-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .rating-signin-prompt { font-size: 13px; color: rgba(255,255,255,0.45); text-align: center; padding: 12px 0 4px; }
     .rating-signin-prompt button { color: rgba(255,255,255,0.8); background: none; border: none; cursor: pointer; font-size: 13px; font-family: 'DM Sans', sans-serif; text-decoration: underline; }
+
+    /* ══════════════════════ CLUB PAGE ══════════════════════ */
+    #view-club { min-height: 100vh; }
+
+    /* Back breadcrumb */
+    .club-page-back { padding: 16px 24px 0; max-width: 960px; margin: 0 auto; }
+    .club-back-btn { display: inline-flex; align-items: center; gap: 7px; background: none; border: none; color: rgba(255,255,255,0.38); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 6px 0; transition: color 0.18s; letter-spacing: 0.01em; }
+    .club-back-btn:hover { color: rgba(255,255,255,0.75); }
+    .club-back-btn svg { flex-shrink: 0; }
+
+    /* Hero */
+    .club-page-hero { position: relative; overflow: hidden; padding: 40px 24px 44px; margin-bottom: 0; }
+    .club-page-hero-bg { position: absolute; inset: 0; pointer-events: none; }
+    .club-page-hero-inner { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; display: flex; align-items: center; gap: 28px; }
+    .club-page-badge-wrap { flex-shrink: 0; }
+    .club-page-badge { width: 96px; height: 96px; object-fit: contain; filter: drop-shadow(0 4px 16px rgba(0,0,0,0.35)); display: block; }
+    .club-page-badge-init { width: 96px; height: 96px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; background: rgba(0,0,0,0.18); flex-shrink: 0; }
+    .club-page-hero-text { flex: 1; min-width: 0; }
+    .club-page-eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .club-page-name { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(28px, 5vw, 52px); font-weight: 800; line-height: 1.0; margin-bottom: 6px; letter-spacing: 0.01em; }
+    .club-page-sub { font-size: 14px; opacity: 0.6; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+    .club-page-sub-sep { opacity: 0.35; }
+    .club-page-website { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; opacity: 0.7; text-decoration: none; transition: opacity 0.18s; margin-top: 10px; }
+    .club-page-website:hover { opacity: 1; }
+
+    /* Body */
+    .club-page-body { max-width: 960px; margin: 0 auto; padding: 36px 24px 72px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 680px) {
+      .club-page-body { grid-template-columns: 1fr; gap: 16px; padding: 24px 16px 56px; }
+      .club-page-hero-inner { flex-direction: row; gap: 18px; }
+      .club-page-badge, .club-page-badge-init { width: 68px; height: 68px; font-size: 18px; }
+    }
+
+    /* Sections */
+    .club-section { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; overflow: hidden; }
+    .club-section-header { padding: 14px 18px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .club-section-title { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.35); }
+    .club-section-body { padding: 16px 18px; }
+
+    /* Facts */
+    .club-facts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .club-fact { padding: 10px 12px; background: rgba(255,255,255,0.04); border-radius: 6px; }
+    .club-fact-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.38); margin-bottom: 3px; }
+    .club-fact-value { font-size: 13px; font-weight: 600; line-height: 1.35; }
+
+    /* Nearby amenities */
+    .club-amenity-loading { font-size: 13px; color: rgba(255,255,255,0.35); font-style: italic; padding: 8px 0; display: flex; align-items: center; gap: 10px; }
+    .club-amenity-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.1); border-top-color: rgba(255,255,255,0.4); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+    .club-amenity-group { margin-bottom: 16px; }
+    .club-amenity-group:last-child { margin-bottom: 0; }
+    .club-amenity-group-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 8px; }
+    .club-amenity-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .club-amenity-row:last-child { border-bottom: none; }
+    .club-amenity-name { font-size: 13px; font-weight: 500; flex: 1; }
+    .club-amenity-dist { font-size: 12px; color: rgba(255,255,255,0.4); white-space: nowrap; margin-left: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; }
+    .club-amenity-none { font-size: 13px; color: rgba(255,255,255,0.28); font-style: italic; padding: 4px 0; }
+
+    /* Highlights + tags — span full width */
+    .club-section-full { grid-column: 1 / -1; }
+    .club-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .club-pill-highlight { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); }
+    .club-pill-tag { font-size: 12px; padding: 5px 12px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.65); }
+    .club-pills-empty { font-size: 13px; color: rgba(255,255,255,0.25); font-style: italic; }
+
+    /* No-coords notice */
+    .club-no-coords { font-size: 13px; color: rgba(255,255,255,0.28); font-style: italic; line-height: 1.6; padding: 4px 0; }
   </style>
 </head>
 <body>
@@ -660,6 +726,19 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════
+     CLUB PAGE
+══════════════════════════════════ -->
+<div id="view-club" class="view">
+  <div class="club-page-back">
+    <button class="club-back-btn" onclick="goBackToClubs()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15,18 9,12 15,6"/></svg>
+      Back to Clubs
+    </button>
+  </div>
+  <div id="club-page-content"></div>
+</div>
+
 <!-- ── Modal ── -->
 <div id="modal-overlay">
   <div id="modal-box">
@@ -804,7 +883,7 @@ document.getElementById('auth-overlay').addEventListener('click', e => {
 });
 
 /* ── Router ── */
-function showView(name) {
+function showView(name, pushState = true) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
   const v = document.getElementById('view-' + name);
@@ -813,7 +892,186 @@ function showView(name) {
   if (b) b.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (name === 'account') buildAccountView();
+  // Clear ?club= param when navigating away from club page
+  if (name !== 'club' && pushState) {
+    const url = new URL(window.location);
+    url.searchParams.delete('club');
+    history.pushState({view: name}, '', url);
+  }
 }
+
+function goBackToClubs() {
+  showView('clubs');
+}
+
+/* ── Club page ── */
+function showClub(idOrRaw, pushState = true) {
+  const raw = typeof idOrRaw === 'object' ? idOrRaw : ALL_CLUBS.find(c => c.id === idOrRaw);
+  if (!raw) return;
+  const c = N(raw);
+
+  // Push URL state
+  if (pushState) {
+    const url = new URL(window.location);
+    url.searchParams.set('club', c.id);
+    history.pushState({view: 'club', clubId: c.id}, '', url);
+  }
+
+  buildClubPage(c);
+
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-club').classList.add('active');
+  // Highlight "Clubs" in nav as closest parent
+  const clubsBtn = document.querySelector('.nav-link[data-view="clubs"]');
+  if (clubsBtn) clubsBtn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function buildClubPage(c) {
+  const tc = isLight(c.colours.primary) ? '#111' : '#fff';
+  const dimC = isLight(c.colours.primary) ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.55)';
+  const secBg = `linear-gradient(135deg, ${c.colours.primary} 0%, color-mix(in srgb, ${c.colours.primary} 45%, ${c.colours.secondary} 55%) 100%)`;
+
+  const badgeHTML = c.badgeUrl
+    ? `<img src="${c.badgeUrl}" class="club-page-badge" alt="">`
+    : `<div class="club-page-badge-init" style="color:${tc}">${ini(c.name)}</div>`;
+
+  const websiteHTML = c.website
+    ? `<a href="${c.website}" target="_blank" rel="noopener" class="club-page-website" style="color:${tc}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Visit website
+      </a>`
+    : '';
+
+  const allPills = [...(c.highlights || []), ...ratingPills(c)];
+  const tags = c.tags || [];
+  const showPillsSection = allPills.length || tags.length;
+
+  const pillsHTML = showPillsSection ? `
+    <div class="club-section club-section-full">
+      <div class="club-section-header"><div class="club-section-title">About this ground</div></div>
+      <div class="club-section-body">
+        <div class="club-pills">
+          ${allPills.map(p => `<span class="club-pill-highlight">${p}</span>`).join('')}
+          ${tags.map(t => `<span class="club-pill-tag">${t}</span>`).join('')}
+        </div>
+        ${!allPills.length && !tags.length ? '<div class="club-pills-empty">No ground notes yet.</div>' : ''}
+      </div>
+    </div>` : '';
+
+  const hasCoords = c.lat && c.lng;
+  const nearbyHTML = `
+    <div class="club-section club-section-full" id="club-nearby-section">
+      <div class="club-section-header"><div class="club-section-title">Getting there &amp; nearby</div></div>
+      <div class="club-section-body" id="club-nearby-body">
+        ${hasCoords
+          ? `<div class="club-amenity-loading" id="club-amenity-loading"><div class="club-amenity-spinner"></div>Finding nearby amenities…</div><div id="club-amenity-results" style="display:none"></div>`
+          : `<div class="club-no-coords">Location data for this ground hasn't been added yet — check back soon.</div>`
+        }
+      </div>
+    </div>`;
+
+  document.getElementById('club-page-content').innerHTML = `
+    <div class="club-page-hero" style="color:${tc}">
+      <div class="club-page-hero-bg" style="background:${secBg}"></div>
+      <div class="club-page-hero-inner">
+        <div class="club-page-badge-wrap">${badgeHTML}</div>
+        <div class="club-page-hero-text">
+          <div class="club-page-eyebrow">
+            <span class="step-badge" style="color:${tc};border-color:${tc}40;background:${tc}18">Step ${c.step}</span>
+            <span style="font-size:13px;opacity:0.65">${c.league}</span>
+          </div>
+          <h1 class="club-page-name">${c.name}</h1>
+          <div class="club-page-sub" style="color:${dimC}">
+            ${c.nickname ? `<span>${c.nickname}</span><span class="club-page-sub-sep">·</span>` : ''}
+            ${c.founded ? `<span>Est. ${c.founded}</span><span class="club-page-sub-sep">·</span>` : ''}
+            <span>${c.town || ''}${c.county ? ', ' + c.county : ''}</span>
+          </div>
+          ${websiteHTML}
+        </div>
+      </div>
+    </div>
+
+    <div class="club-page-body">
+      <div class="club-section">
+        <div class="club-section-header"><div class="club-section-title">Club &amp; Ground</div></div>
+        <div class="club-section-body">
+          <div class="club-facts-grid">
+            <div class="club-fact"><div class="club-fact-label">Ground</div><div class="club-fact-value">${c.ground || '—'}</div></div>
+            <div class="club-fact"><div class="club-fact-label">Town</div><div class="club-fact-value">${c.town || '—'}${c.county ? ', ' + c.county : ''}</div></div>
+            <div class="club-fact"><div class="club-fact-label">League</div><div class="club-fact-value">${c.league}</div></div>
+            <div class="club-fact"><div class="club-fact-label">Step</div><div class="club-fact-value">Step ${c.step} of the pyramid</div></div>
+            ${c.founded ? `<div class="club-fact"><div class="club-fact-label">Founded</div><div class="club-fact-value">${c.founded}</div></div>` : ''}
+            ${c.capacity ? `<div class="club-fact"><div class="club-fact-label">Capacity</div><div class="club-fact-value">${c.capacity.toLocaleString()}</div></div>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="club-section" style="background:rgba(255,255,255,0.02)">
+        <div class="club-section-header"><div class="club-section-title">Club Colours</div></div>
+        <div class="club-section-body" style="display:flex;align-items:center;gap:14px">
+          <div style="display:flex;gap:8px">
+            <div style="width:40px;height:40px;border-radius:50%;background:${c.colours.primary};border:2px solid rgba(255,255,255,0.12);flex-shrink:0"></div>
+            <div style="width:40px;height:40px;border-radius:50%;background:${c.colours.secondary};border:2px solid rgba(255,255,255,0.12);flex-shrink:0"></div>
+          </div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.5)">${(c.colour_names || []).join(' &amp; ') || '—'}</div>
+        </div>
+      </div>
+
+      ${nearbyHTML}
+      ${pillsHTML}
+    </div>`;
+
+  // Kick off amenity fetch if we have coords
+  if (hasCoords) {
+    fetchNearbyAmenities(c.id, c.lat, c.lng).then(results => {
+      const loading = document.getElementById('club-amenity-loading');
+      const resultsEl = document.getElementById('club-amenity-results');
+      if (!loading || !resultsEl) return;
+      loading.style.display = 'none';
+      resultsEl.style.display = 'block';
+      resultsEl.innerHTML = renderClubAmenities(results);
+    });
+  }
+}
+
+function renderClubAmenities(results) {
+  if (!results) return `<div class="club-amenity-none">Couldn't load nearby amenities — try refreshing.</div>`;
+  const groups = [
+    { key: 'train',       label: '🚂 Train stations' },
+    { key: 'pub',         label: '🍺 Pubs &amp; bars' },
+    { key: 'supermarket', label: '🛒 Supermarkets' },
+  ];
+  let html = '';
+  let any = false;
+  groups.forEach(({ key, label }) => {
+    const items = results[key];
+    if (!items || !items.length) return;
+    any = true;
+    html += `<div class="club-amenity-group">
+      <div class="club-amenity-group-label">${label}</div>
+      ${items.map(item => {
+        const d = item.dist < 0.1 ? `${Math.round(item.dist * 1000)}m` : `${item.dist.toFixed(1)} km`;
+        return `<div class="club-amenity-row"><span class="club-amenity-name">${item.name}</span><span class="club-amenity-dist">${d}</span></div>`;
+      }).join('')}
+    </div>`;
+  });
+  if (!any) return `<div class="club-amenity-none">No train stations, pubs or supermarkets found within 10 miles.</div>`;
+  return html;
+}
+
+// Browser back/forward support
+window.addEventListener('popstate', () => {
+  const params = new URLSearchParams(window.location.search);
+  const clubId = params.get('club');
+  if (clubId) {
+    const club = ALL_CLUBS.find(c => String(c.id) === clubId);
+    if (club) { showClub(club, false); return; }
+  }
+  // Default to clubs view on back
+  showView('clubs', false);
+});
 
 /* ── Data ── */
 let ALL_CLUBS = [];
@@ -939,7 +1197,7 @@ function renderNearbyGrounds(userLat, userLng) {
       <div class="nearby-name">${c.name}</div>
       <div class="nearby-meta">${c.town||''}${c.county?', '+c.county:''}</div>
       <div class="nearby-dist">${distStr}</div>`;
-    row.addEventListener('click', () => openModal(c));
+    row.addEventListener('click', () => showClub(raw));
     container.appendChild(row);
   });
 }
@@ -985,7 +1243,7 @@ function buildFavouritesSection() {
         <div class="fav-card-score">${c.rating!=null?parseFloat(c.rating).toFixed(1):'—'}</div>
         <div class="step-badge" style="font-size:9px">Step ${c.step}</div>
       </div>`;
-    card.addEventListener('click', () => openModal(c));
+    card.addEventListener('click', () => showClub(raw));
     grid.appendChild(card);
   });
 }
@@ -1021,7 +1279,7 @@ function buildMyRatingsSection() {
       <div class="my-rating-name">${c.name}</div>
       <div class="my-rating-date">${date}</div>
       <div class="my-rating-score">${avg}</div>`;
-    row.addEventListener('click', () => openModal(c));
+    row.addEventListener('click', () => showClub(club));
     list.appendChild(row);
   });
 }
@@ -1256,7 +1514,7 @@ function buildCard(raw) {
     </div>`;
   div.addEventListener('mouseenter',()=>{div.style.transform='translateY(-4px)';div.style.boxShadow=`0 16px 40px ${c.colours.primary}55`;});
   div.addEventListener('mouseleave',()=>{div.style.transform='translateY(0)';div.style.boxShadow=`0 4px 16px ${c.colours.primary}33`;});
-  div.addEventListener('click',()=>openModal(c)); return div;
+  div.addEventListener('click',()=>showClub(raw)); return div;
 }
 function renderGrid() {
   const grid=document.getElementById('clubs-grid'), noRes=document.getElementById('no-results'), count=document.getElementById('result-count');
@@ -1569,7 +1827,16 @@ function closeModal() { document.getElementById('modal-overlay').classList.remov
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){ closeModal(); closeAuth(); }});
 
-loadClubs();
+(async () => {
+  await loadClubs();
+  // Handle ?club= param on initial page load (shareable URLs)
+  const params = new URLSearchParams(window.location.search);
+  const clubId = params.get('club');
+  if (clubId) {
+    const club = ALL_CLUBS.find(c => String(c.id) === clubId);
+    if (club) showClub(club, false);
+  }
+})();
 </script>
 </body>
 </html>
