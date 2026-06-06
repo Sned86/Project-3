@@ -229,9 +229,24 @@
     .modal-name { font-family: 'Libre Baskerville', serif; font-size: 24px; font-weight: 700; margin: 6px 0 2px; line-height: 1.1; }
     .modal-sub { font-size: 14px; margin: 0; }
     .facts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-    .fact-box { background: rgba(0,0,0,0.12); border-radius: 6px; padding: 10px 12px; }
+    .fact-box { background: rgba(0,0,0,0.12); border-radius: 6px; padding: 10px 12px; cursor: default; }
+    .fact-box.expandable { cursor: pointer; transition: background 0.15s; }
+    .fact-box.expandable:hover { background: rgba(0,0,0,0.2); }
     .fact-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.6; margin-bottom: 2px; }
-    .fact-value { font-size: 13px; font-weight: 600; }
+    .fact-value { font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .fact-arrow { font-size: 9px; opacity: 0.45; transition: transform 0.2s; flex-shrink: 0; }
+    .fact-box.open .fact-arrow { transform: rotate(180deg); opacity: 0.7; }
+    .fact-panel { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .fact-box.open .fact-panel { max-height: 600px; }
+    .fact-panel-inner { padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .fact-panel-loading { font-size: 12px; opacity: 0.45; font-style: italic; }
+    .amenity-group { margin-bottom: 4px; }
+    .amenity-group-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.5; margin-bottom: 4px; }
+    .amenity-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .amenity-row:last-child { border-bottom: none; }
+    .amenity-name { flex: 1; font-weight: 500; }
+    .amenity-dist { font-size: 11px; opacity: 0.5; white-space: nowrap; margin-left: 8px; }
+    .fact-panel-none { font-size: 12px; opacity: 0.38; font-style: italic; }
     .ratings-block { background: rgba(0,0,0,0.12); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
     .ratings-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.6; margin-bottom: 12px; }
     .overall-score { font-size: 24px; font-weight: 800; font-family: 'Barlow Condensed', sans-serif; }
@@ -342,17 +357,6 @@
     .fav-btn { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; width: 30px; height: 30px; min-width: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s; font-size: 14px; flex-shrink: 0; }
     .fav-btn:hover { background: rgba(0,0,0,0.35); border-color: rgba(255,255,255,0.3); }
     .fav-btn.active { background: rgba(220,50,50,0.3); border-color: rgba(220,80,80,0.5); }
-
-    /* ── Expandable fact boxes ── */
-    .fact-box { cursor: pointer; transition: background 0.15s; user-select: none; }
-    .fact-box:hover { background: rgba(0,0,0,0.2); }
-    .fact-box-header { display: flex; align-items: center; justify-content: space-between; }
-    .fact-expand-arrow { font-size: 8px; opacity: 0.35; transition: transform 0.22s; flex-shrink: 0; margin-left: 4px; }
-    .fact-box.expanded .fact-expand-arrow { transform: rotate(180deg); opacity: 0.6; }
-    .fact-expand-panel { overflow: hidden; max-height: 0; transition: max-height 0.35s ease; }
-    .fact-expand-panel.open { max-height: 600px; }
-    .fact-expand-inner { padding-top: 8px; font-size: 12px; line-height: 1.65; opacity: 0.75; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; }
-    .fact-expand-inner.loading::after { content: ''; display: inline-block; width: 10px; height: 10px; border: 1.5px solid rgba(255,255,255,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; margin-left: 6px; vertical-align: middle; }
 
     /* ── Rating submission in modal ── */
     .rating-submit-block { background: rgba(0,0,0,0.12); border-radius: 8px; padding: 16px; margin-top: 14px; }
@@ -1273,33 +1277,157 @@ document.getElementById('search-input').addEventListener('input',e=>{searchQuery
 /* ── Modal ── */
 let MODAL_RATING_STATE = { location: 0, friendliness: 0, food: 0, facilities: 0 };
 let MODAL_CLUB_ID = null;
+const FACT_CACHE = {}; // keyed by club id
+
+/* ── OSM Overpass: fetch nearby amenities ── */
+async function fetchNearbyAmenities(clubId, lat, lng) {
+  if (FACT_CACHE[clubId]) return FACT_CACHE[clubId];
+
+  const R = 1600; // 1 mile in metres
+  // Query for train stations, bus stops, and car parks within radius
+  const query = `
+    [out:json][timeout:10];
+    (
+      node["railway"="station"](around:${R},${lat},${lng});
+      node["railway"="halt"](around:${R},${lat},${lng});
+      node["public_transport"="stop_position"]["train"="yes"](around:${R},${lat},${lng});
+      node["highway"="bus_stop"](around:${R},${lat},${lng});
+      node["amenity"="parking"](around:${R},${lat},${lng});
+      way["amenity"="parking"](around:${R},${lat},${lng});
+    );
+    out center;
+  `.trim();
+
+  try {
+    const res = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query)
+    });
+    const data = await res.json();
+
+    const categorise = (el) => {
+      const t = el.tags || {};
+      if (t.railway === 'station' || t.railway === 'halt' || (t.public_transport === 'stop_position' && t.train === 'yes')) return 'train';
+      if (t.highway === 'bus_stop') return 'bus';
+      if (t.amenity === 'parking') return 'parking';
+      return null;
+    };
+
+    const getName = (el) => {
+      const t = el.tags || {};
+      return t.name || t['name:en'] || t.ref || null;
+    };
+
+    const elLat = (el) => el.lat ?? el.center?.lat;
+    const elLng = (el) => el.lon ?? el.center?.lon;
+
+    const results = { train: [], bus: [], parking: [] };
+
+    data.elements.forEach(el => {
+      const cat = categorise(el);
+      if (!cat) return;
+      const name = getName(el);
+      if (!name) return; // skip unnamed stops/parks
+      const dist = haversineKm(lat, lng, elLat(el), elLng(el));
+      results[cat].push({ name, dist });
+    });
+
+    // Sort each category by distance, keep top 3
+    ['train','bus','parking'].forEach(cat => {
+      results[cat] = results[cat]
+        .sort((a, b) => a.dist - b.dist)
+        .filter((item, idx, arr) => arr.findIndex(x => x.name === item.name) === idx) // dedupe by name
+        .slice(0, 3);
+    });
+
+    FACT_CACHE[clubId] = results;
+    return results;
+  } catch (err) {
+    console.warn('Overpass fetch failed:', err);
+    return null;
+  }
+}
+
+function renderAmenityPanel(results, tc) {
+  if (!results) return `<div class="fact-panel-none">Couldn't load nearby amenities.</div>`;
+
+  const groups = [
+    { key: 'train',   label: '🚂 Train stations' },
+    { key: 'bus',     label: '🚌 Bus stops' },
+    { key: 'parking', label: '🅿️ Car parks' },
+  ];
+
+  let html = '';
+  let anyResults = false;
+
+  groups.forEach(({ key, label }) => {
+    const items = results[key];
+    if (!items.length) return;
+    anyResults = true;
+    html += `<div class="amenity-group">
+      <div class="amenity-group-label">${label}</div>
+      ${items.map(item => {
+        const distStr = item.dist < 0.1 ? `${Math.round(item.dist*1000)}m` : `${item.dist.toFixed(1)} km`;
+        return `<div class="amenity-row"><span class="amenity-name">${item.name}</span><span class="amenity-dist">${distStr}</span></div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  if (!anyResults) return `<div class="fact-panel-none">No train stations, bus stops or car parks found within 1 mile.</div>`;
+  return html;
+}
+
+function toggleFactBox(boxEl, clubId, lat, lng, tc) {
+  const isOpen = boxEl.classList.contains('open');
+  // Close any other open fact boxes
+  document.querySelectorAll('.fact-box.open').forEach(b => b.classList.remove('open'));
+  if (isOpen) return;
+
+  boxEl.classList.add('open');
+
+  // Only the Ground box fetches amenities
+  if (boxEl.dataset.type !== 'ground') return;
+  const panel = boxEl.querySelector('.fact-panel-inner');
+  if (!panel) return;
+
+  if (FACT_CACHE[clubId]) {
+    panel.innerHTML = renderAmenityPanel(FACT_CACHE[clubId], tc);
+    return;
+  }
+
+  if (!lat || !lng) {
+    panel.innerHTML = `<div class="fact-panel-none">No location data for this ground yet.</div>`;
+    return;
+  }
+
+  panel.innerHTML = `<div class="fact-panel-loading">Finding nearby amenities…</div>`;
+  fetchNearbyAmenities(clubId, lat, lng).then(results => {
+    panel.innerHTML = renderAmenityPanel(results, tc);
+  });
+}
 
 function openModal(c) {
   MODAL_CLUB_ID = c.id;
   const tc=isLight(c.colours.primary)?'#111':'#fff';
   const dimC=isLight(c.colours.primary)?'rgba(0,0,0,0.55)':'rgba(255,255,255,0.65)';
-  document.getElementById('modal-stripe').style.background=c.colours.secondary;
+  document.getElementById('modal-stripe').style.background=`repeating-linear-gradient(90deg,${c.colours.primary} 0,${c.colours.primary} 30px,${c.colours.secondary} 30px,${c.colours.secondary} 60px)`;
   const box=document.getElementById('modal-box'); box.style.background=c.colours.primary; box.style.color=tc; box.style.boxShadow=`0 24px 80px ${c.colours.primary}88`;
   const ratingRows=[['Location / Access',c.ratings.location],['Friendliness',c.ratings.friendliness],['Food & Drink',c.ratings.food],['Facilities',c.ratings.facilities]].map(([l,v])=>v!=null?`<div class="rating-bar-row"><div class="rating-bar-header"><span>${l}</span><span>${parseFloat(v).toFixed(1)}</span></div><div class="rating-bar-track"><div class="rating-bar-fill" style="width:${(v/5)*100}%"></div></div></div>`:'').join('');
-  const factDefs=[
-    { key:'step',   label:'Step',   value:`Step ${c.step}`,   prompt:`In the English non-league football pyramid, what is Step ${c.step}? Name the leagues at that level and describe how it fits into the pyramid structure. Keep it to 2-3 sentences, plain prose, no markdown.` },
-    { key:'league', label:'League', value:c.league||'—',      prompt:`Give a short factual overview of ${c.league||'this league'} — its history, the region it covers, and the kind of clubs that play in it. 2-3 sentences, plain prose, no markdown.` },
-    { key:'ground', label:'Ground', value:c.ground||'—',      prompt:`${c.ground||'This ground'} is the home of ${c.name}, located in ${c.town||'England'}${c.county?', '+c.county:''}. Briefly describe the nearest transport links for visiting fans — train stations, bus routes, and parking — based on general knowledge of the area. Be practical and specific if you can. 3-4 sentences, plain prose, no markdown.` },
-    { key:'town',   label:'Town',   value:(c.town||'')+(c.county?', '+c.county:''), prompt:`Give a short flavourful description of ${c.town||'this town'}${c.county?', '+c.county:''} — what it's known for, its character, anything interesting for a visiting football fan. 2-3 sentences, plain prose, no markdown.` },
-  ];
-  const facts=factDefs.map(f=>`
-    <div class="fact-box" id="fact-${f.key}" data-fact-key="${f.key}">
-      <div class="fact-box-header">
-        <div>
-          <div class="fact-label" style="color:${dimC}">${f.label}</div>
-          <div class="fact-value">${f.value||'—'}</div>
-        </div>
-        <span class="fact-expand-arrow">▼</span>
-      </div>
-      <div class="fact-expand-panel" id="fact-panel-${f.key}">
-        <div class="fact-expand-inner" id="fact-inner-${f.key}"></div>
-      </div>
-    </div>`).join('');
+
+  // Build fact boxes — Ground is expandable if coordinates exist
+  const hasCoords = c.lat && c.lng;
+  const staticFact = (label, value) =>
+    `<div class="fact-box"><div class="fact-label" style="color:${dimC}">${label}</div><div class="fact-value">${value||'—'}</div></div>`;
+  const groundFact = `<div class="fact-box expandable" data-type="ground" id="fact-box-ground" style="grid-column:1/-1">
+    <div class="fact-label" style="color:${dimC}">Ground</div>
+    <div class="fact-value">${c.ground||'—'} ${hasCoords ? '<span class="fact-arrow">▼</span>' : ''}</div>
+    ${hasCoords ? `<div class="fact-panel"><div class="fact-panel-inner"></div></div>` : ''}
+  </div>`;
+
+  const facts = staticFact('Step', `Step ${c.step}`) +
+                staticFact('League', c.league) +
+                staticFact('Town', (c.town||'')+(c.county?', '+c.county:'')) +
+                groundFact;
   const tags=(c.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('');
   const rc=c.rating_count?`<div style="font-size:11px;opacity:0.5;margin-top:4px">${c.rating_count} rating${c.rating_count!==1?'s':''}</div>`:'';
 
@@ -1339,12 +1467,11 @@ function openModal(c) {
     ${ratingSubmitBlock}
     ${tags?`<div class="tags-row" style="margin-top:14px">${tags}</div>`:''}`;
 
-  // Attach fact-box expand handlers
-  factDefs.forEach(f => {
-    const box = document.getElementById('fact-' + f.key);
-    if (!box) return;
-    box.addEventListener('click', () => expandFact(f.key, f.prompt));
-  });
+  // Attach Ground fact box expand handler
+  const groundBox = document.getElementById('fact-box-ground');
+  if (groundBox && (c.lat && c.lng)) {
+    groundBox.addEventListener('click', () => toggleFactBox(groundBox, c.id, c.lat, c.lng, tc));
+  }
 
   // Attach star click handlers
   ['location','friendliness','food','facilities'].forEach(key => {
@@ -1417,52 +1544,6 @@ async function submitRating(clubId) {
     await loadClubs();
     closeModal();
   }, 800);
-}
-
-/* ── Fact box AI expand ── */
-const FACT_CACHE = {};
-
-async function expandFact(key, prompt) {
-  const box = document.getElementById('fact-' + key);
-  const panel = document.getElementById('fact-panel-' + key);
-  const inner = document.getElementById('fact-inner-' + key);
-  if (!box || !panel || !inner) return;
-
-  const isOpen = panel.classList.contains('open');
-  if (isOpen) {
-    panel.classList.remove('open');
-    box.classList.remove('expanded');
-    return;
-  }
-
-  panel.classList.add('open');
-  box.classList.add('expanded');
-
-  // Use cache if already fetched
-  if (FACT_CACHE[key]) { inner.textContent = FACT_CACHE[key]; return; }
-
-  inner.className = 'fact-expand-inner loading';
-  inner.textContent = '';
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await res.json();
-    const text = data.content?.find(b => b.type === 'text')?.text || 'No information available.';
-    FACT_CACHE[key] = text;
-    inner.className = 'fact-expand-inner';
-    inner.textContent = text;
-  } catch(e) {
-    inner.className = 'fact-expand-inner';
-    inner.textContent = 'Could not load information right now.';
-  }
 }
 
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); document.body.style.overflow=''; }
