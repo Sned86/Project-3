@@ -436,6 +436,7 @@
     .club-amenity-body-inner { padding: 4px 10px 8px; }
     .club-amenity-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .club-amenity-row:last-child { border-bottom: none; }
+    .club-amenity-row.amenity-active { background: rgba(255,255,255,0.08); border-radius: 4px; }
     .club-amenity-name { font-size: 13px; font-weight: 500; flex: 1; }
     .club-amenity-dist { font-size: 12px; color: rgba(255,255,255,0.4); white-space: nowrap; margin-left: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; }
     .club-amenity-none { font-size: 13px; color: rgba(255,255,255,0.28); font-style: italic; padding: 4px 0; }
@@ -1055,6 +1056,8 @@ function buildClubPage(c) {
         mapEl._leaflet_id = null;
         mapEl.innerHTML = '';
       }
+      CLUB_MAP = null;
+      CLUB_AMENITY_MARKER = null;
       const map = L.map(mapEl, {
         center: [c.lat, c.lng],
         zoom: 15,
@@ -1083,6 +1086,8 @@ function buildClubPage(c) {
         .addTo(map)
         .bindPopup(`<strong>${c.name}</strong><br>${c.ground || ''}`)
         .openPopup();
+      CLUB_MAP = map;
+      CLUB_MAP._groundLatLng = [c.lat, c.lng];
     }, 50);
   }
 }
@@ -1113,7 +1118,11 @@ function renderClubAmenities(results) {
     const rows = items.map(item => {
       const d = item.dist < 0.1 ? Math.round(item.dist * 1000) + 'm' : item.dist.toFixed(1) + ' km';
       const icon = item.trainType ? stationIcon(item.trainType) : '';
-      return '<div class="club-amenity-row"><span class="club-amenity-name" style="display:flex;align-items:center">' + icon + item.name + '</span><span class="club-amenity-dist">' + d + '</span></div>';
+      const hasCoords = item.lat && item.lng;
+      const clickAttr = hasCoords
+        ? ` onclick="focusAmenity(${item.lat},${item.lng},'${item.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}',this)" style="cursor:pointer"`
+        : '';
+      return '<div class="club-amenity-row"' + clickAttr + '><span class="club-amenity-name" style="display:flex;align-items:center">' + icon + item.name + '</span><span class="club-amenity-dist">' + d + '</span></div>';
     }).join('');
     html += '<div class="club-amenity-group">' +
       '<button class="club-amenity-group-trigger" onclick="toggleAmenityGroup(this)" aria-expanded="false">' +
@@ -1137,6 +1146,46 @@ function toggleAmenityGroup(trigger) {
   trigger.classList.toggle('open', !isOpen);
   trigger.setAttribute('aria-expanded', String(!isOpen));
   trigger.nextElementSibling.classList.toggle('open', !isOpen);
+}
+
+function focusAmenity(lat, lng, name, rowEl) {
+  if (!CLUB_MAP) return;
+
+  // Toggle off if clicking the already-active row
+  const wasActive = rowEl.classList.contains('amenity-active');
+  document.querySelectorAll('.club-amenity-row.amenity-active').forEach(r => r.classList.remove('amenity-active'));
+  if (CLUB_AMENITY_MARKER) { CLUB_MAP.removeLayer(CLUB_AMENITY_MARKER); CLUB_AMENITY_MARKER = null; }
+  if (wasActive) return;
+
+  // Mark row active
+  rowEl.classList.add('amenity-active');
+
+  // Drop a secondary marker (white with dark border — distinct from the club marker)
+  const amenityIcon = L.divIcon({
+    html: `<div style="
+      width:14px;height:14px;border-radius:50%;
+      background:#fff;border:3px solid #222;
+      box-shadow:0 2px 8px rgba(0,0,0,0.5);
+    "></div>`,
+    className: '',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  });
+  CLUB_AMENITY_MARKER = L.marker([lat, lng], { icon: amenityIcon })
+    .addTo(CLUB_MAP)
+    .bindPopup(`<strong>${name}</strong>`)
+    .openPopup();
+
+  // Fit both the ground and amenity into view
+  if (CLUB_MAP._groundLatLng) {
+    CLUB_MAP.fitBounds([[lat, lng], CLUB_MAP._groundLatLng], { padding: [40, 40], maxZoom: 15 });
+  } else {
+    CLUB_MAP.setView([lat, lng], 14);
+  }
+
+  // Scroll map into view (helpful on mobile where map is stacked above amenities)
+  const mapEl = document.getElementById('club-map');
+  if (mapEl) mapEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // Browser back/forward support
@@ -1614,6 +1663,8 @@ document.getElementById('search-input').addEventListener('input',e=>{searchQuery
 let MODAL_RATING_STATE = { location: 0, friendliness: 0, food: 0, facilities: 0 };
 let MODAL_CLUB_ID = null;
 const FACT_CACHE = {}; // keyed by club id
+let CLUB_MAP = null;            // Leaflet map instance for current club page
+let CLUB_AMENITY_MARKER = null; // secondary marker for clicked amenity
 
 /* ── OSM Overpass: fetch nearby amenities ── */
 
@@ -1720,7 +1771,7 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
       const dist = haversineKm(lat, lng, elLat(el), elLng(el));
       const bucket = TRAIN_TYPES.has(cat) ? 'train' : cat;
       const trainType = TRAIN_TYPES.has(cat) ? cat : undefined;
-      results[bucket].push({ name, dist, ...(trainType && { trainType }) });
+      results[bucket].push({ name, dist, lat: elLat(el), lng: elLng(el), ...(trainType && { trainType }) });
     });
 
     // Sort by distance, dedupe by name, keep top 3
