@@ -1668,7 +1668,7 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
       node["network"="Tyne and Wear Metro"](around:${R},${lat},${lng});
       node["amenity"="pub"](around:${R},${lat},${lng});
       node["amenity"="bar"](around:${R},${lat},${lng});
-      node["shop"="supermarket"](around:${R},${lat},${lng});
+      nwr["shop"="supermarket"](around:${R},${lat},${lng});
     );
     out center;
   `.trim();
