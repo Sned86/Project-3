@@ -1100,9 +1100,9 @@ function stationIcon(trainType) {
 function renderClubAmenities(results) {
   if (!results) return '<div class="club-amenity-none">Couldn\'t load nearby amenities \u2014 try refreshing.</div>';
   const groups = [
-    { key: 'train',       label: '\U0001F689 Train & Metro' },
-    { key: 'pub',         label: '\U0001F37A Pubs & bars' },
-    { key: 'supermarket', label: '\U0001F6D2 Supermarkets' },
+    { key: 'train',       label: '🚉 Train & Metro' },
+    { key: 'pub',         label: '🍺 Pubs & bars' },
+    { key: 'supermarket', label: '🛒 Supermarkets' },
   ];
   let html = '';
   let any = false;
@@ -1704,14 +1704,7 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
     const elLat = (el) => el.lat ?? el.center?.lat;
     const elLng = (el) => el.lon ?? el.center?.lon;
 
-    const SUPERMARKET_CHAINS = [
-      'tesco', 'sainsbury', 'asda', 'morrisons', 'waitrose',
-      'marks & spencer', 'm&s simply food', 'm&s', 'aldi', 'lidl',
-      'co-op', 'coop', 'co-operative', 'cooperative',
-      'iceland', 'spar', 'farmfoods', 'booths', 'budgens',
-      'nisa', 'heron foods', 'londis', 'costcutter', 'premier',
-      'mace', 'one stop', 'little waitrose', 'sainsburys',
-    ];
+    // No chain whitelist — trust OSM's shop=supermarket tag directly
 
     const results = { train: [], pub: [], supermarket: [] };
     const TRAIN_TYPES = new Set(['train_national','train_underground','train_metro']);
@@ -1723,12 +1716,7 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
       if (!name) return;
       // Filter out heritage/steam railway stations
       if (TRAIN_TYPES.has(cat) && isHeritageStation(el)) return;
-      // Filter supermarkets to major chains only
-      if (cat === 'supermarket') {
-        const t = el.tags || {};
-        const superStr = [name, t.brand || '', t.operator || ''].join(' ').toLowerCase();
-        if (!SUPERMARKET_CHAINS.some(chain => superStr.includes(chain))) return;
-      }
+      // No supermarket filtering — OSM shop=supermarket tag is reliable enough
       const dist = haversineKm(lat, lng, elLat(el), elLng(el));
       const bucket = TRAIN_TYPES.has(cat) ? 'train' : cat;
       const trainType = TRAIN_TYPES.has(cat) ? cat : undefined;
