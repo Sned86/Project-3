@@ -421,9 +421,19 @@
     /* Nearby amenities */
     .club-amenity-loading { font-size: 13px; color: rgba(255,255,255,0.35); font-style: italic; padding: 8px 0; display: flex; align-items: center; gap: 10px; }
     .club-amenity-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.1); border-top-color: rgba(255,255,255,0.4); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
-    .club-amenity-group { margin-bottom: 16px; }
+    .club-amenity-group { margin-bottom: 4px; }
     .club-amenity-group:last-child { margin-bottom: 0; }
-    .club-amenity-group-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 8px; }
+    .club-amenity-group-trigger { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 9px 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; cursor: pointer; transition: background 0.15s; font-family: 'DM Sans', sans-serif; color: rgba(255,255,255,0.7); }
+    .club-amenity-group-trigger:hover { background: rgba(255,255,255,0.08); }
+    .club-amenity-group-trigger.open { border-radius: 6px 6px 0 0; border-bottom-color: transparent; background: rgba(255,255,255,0.06); }
+    .club-amenity-trigger-left { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+    .club-amenity-trigger-right { display: flex; align-items: center; gap: 8px; }
+    .club-amenity-trigger-count { font-size: 11px; color: rgba(255,255,255,0.3); font-weight: 400; }
+    .club-amenity-trigger-arrow { font-size: 8px; opacity: 0.4; transition: transform 0.2s; }
+    .club-amenity-group-trigger.open .club-amenity-trigger-arrow { transform: rotate(180deg); opacity: 0.7; }
+    .club-amenity-body { overflow: hidden; max-height: 0; transition: max-height 0.28s ease; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-top: none; border-radius: 0 0 6px 6px; }
+    .club-amenity-body.open { max-height: 400px; }
+    .club-amenity-body-inner { padding: 4px 10px 8px; }
     .club-amenity-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .club-amenity-row:last-child { border-bottom: none; }
     .club-amenity-name { font-size: 13px; font-weight: 500; flex: 1; }
@@ -1088,11 +1098,11 @@ function stationIcon(trainType) {
 }
 
 function renderClubAmenities(results) {
-  if (!results) return '<div class="club-amenity-none">Couldn\'t load nearby amenities — try refreshing.</div>';
+  if (!results) return '<div class="club-amenity-none">Couldn\'t load nearby amenities \u2014 try refreshing.</div>';
   const groups = [
-    { key: 'train',       label: '🚉 Train &amp; Metro' },
-    { key: 'pub',         label: '🍺 Pubs &amp; bars' },
-    { key: 'supermarket', label: '🛒 Supermarkets' },
+    { key: 'train',       label: '\U0001F689 Train & Metro' },
+    { key: 'pub',         label: '\U0001F37A Pubs & bars' },
+    { key: 'supermarket', label: '\U0001F6D2 Supermarkets' },
   ];
   let html = '';
   let any = false;
@@ -1100,15 +1110,33 @@ function renderClubAmenities(results) {
     const items = results[key];
     if (!items || !items.length) return;
     any = true;
-    html += '<div class="club-amenity-group"><div class="club-amenity-group-label">' + label + '</div>' +
-      items.map(item => {
-        const d = item.dist < 0.1 ? Math.round(item.dist * 1000) + 'm' : item.dist.toFixed(1) + ' km';
-        const icon = item.trainType ? stationIcon(item.trainType) : '';
-        return '<div class="club-amenity-row"><span class="club-amenity-name" style="display:flex;align-items:center">' + icon + item.name + '</span><span class="club-amenity-dist">' + d + '</span></div>';
-      }).join('') + '</div>';
+    const rows = items.map(item => {
+      const d = item.dist < 0.1 ? Math.round(item.dist * 1000) + 'm' : item.dist.toFixed(1) + ' km';
+      const icon = item.trainType ? stationIcon(item.trainType) : '';
+      return '<div class="club-amenity-row"><span class="club-amenity-name" style="display:flex;align-items:center">' + icon + item.name + '</span><span class="club-amenity-dist">' + d + '</span></div>';
+    }).join('');
+    html += '<div class="club-amenity-group">' +
+      '<button class="club-amenity-group-trigger" onclick="toggleAmenityGroup(this)" aria-expanded="false">' +
+        '<span class="club-amenity-trigger-left">' + label + '</span>' +
+        '<span class="club-amenity-trigger-right">' +
+          '<span class="club-amenity-trigger-count">' + items.length + ' found</span>' +
+          '<span class="club-amenity-trigger-arrow">\u25BC</span>' +
+        '</span>' +
+      '</button>' +
+      '<div class="club-amenity-body">' +
+        '<div class="club-amenity-body-inner">' + rows + '</div>' +
+      '</div>' +
+    '</div>';
   });
   if (!any) return '<div class="club-amenity-none">No train stations, pubs or supermarkets found within 10 miles.</div>';
   return html;
+}
+
+function toggleAmenityGroup(trigger) {
+  const isOpen = trigger.classList.contains('open');
+  trigger.classList.toggle('open', !isOpen);
+  trigger.setAttribute('aria-expanded', String(!isOpen));
+  trigger.nextElementSibling.classList.toggle('open', !isOpen);
 }
 
 // Browser back/forward support
@@ -1678,8 +1706,11 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
 
     const SUPERMARKET_CHAINS = [
       'tesco', 'sainsbury', 'asda', 'morrisons', 'waitrose',
-      'marks & spencer', 'm&s', 'aldi', 'lidl', 'co-op', 'coop',
-      'the co-operative', 'iceland', 'spar'
+      'marks & spencer', 'm&s simply food', 'm&s', 'aldi', 'lidl',
+      'co-op', 'coop', 'co-operative', 'cooperative',
+      'iceland', 'spar', 'farmfoods', 'booths', 'budgens',
+      'nisa', 'heron foods', 'londis', 'costcutter', 'premier',
+      'mace', 'one stop', 'little waitrose', 'sainsburys',
     ];
 
     const results = { train: [], pub: [], supermarket: [] };
@@ -1694,8 +1725,9 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
       if (TRAIN_TYPES.has(cat) && isHeritageStation(el)) return;
       // Filter supermarkets to major chains only
       if (cat === 'supermarket') {
-        const nameLower = name.toLowerCase();
-        if (!SUPERMARKET_CHAINS.some(chain => nameLower.includes(chain))) return;
+        const t = el.tags || {};
+        const superStr = [name, t.brand || '', t.operator || ''].join(' ').toLowerCase();
+        if (!SUPERMARKET_CHAINS.some(chain => superStr.includes(chain))) return;
       }
       const dist = haversineKm(lat, lng, elLat(el), elLng(el));
       const bucket = TRAIN_TYPES.has(cat) ? 'train' : cat;
