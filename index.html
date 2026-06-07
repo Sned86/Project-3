@@ -1016,8 +1016,7 @@ function buildClubPage(c) {
             <div class="club-fact"><div class="club-fact-label">Ground</div><div class="club-fact-value">${c.ground || '—'}</div></div>
             <div class="club-fact"><div class="club-fact-label">Founded</div><div class="club-fact-value">${c.founded || '—'}</div></div>
             <div class="club-fact"><div class="club-fact-label">Capacity</div><div class="club-fact-value">${c.capacity ? c.capacity.toLocaleString() : '—'}</div></div>
-            <div class="club-fact"><div class="club-fact-label">League</div><div class="club-fact-value">${c.league}</div></div>
-            <div class="club-fact"><div class="club-fact-label">Step</div><div class="club-fact-value">Step ${c.step}</div></div>
+            <div class="club-fact" style="grid-column:1/-1"><div class="club-fact-label">League</div><div class="club-fact-value">${c.league}</div></div>
           </div>
         </div>
       </div>
