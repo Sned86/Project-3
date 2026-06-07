@@ -1077,10 +1077,20 @@ function buildClubPage(c) {
   }
 }
 
+function stationIcon(trainType) {
+  if (trainType === 'train_underground') {
+    return '<svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0;vertical-align:middle;margin-right:6px" aria-label="London Underground"><circle cx="9" cy="9" r="8.5" fill="#E32017"/><clipPath id="lu-clip-club"><circle cx="9" cy="9" r="8.5"/></clipPath><rect x="0" y="6.8" width="18" height="4.4" fill="#003594" clip-path="url(#lu-clip-club)"/><circle cx="9" cy="9" r="8.5" fill="none" stroke="#fff" stroke-width="0.6"/></svg>';
+  }
+  if (trainType === 'train_metro') {
+    return '<svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0;vertical-align:middle;margin-right:6px" aria-label="Tyne and Wear Metro"><circle cx="9" cy="9" r="8.5" fill="#FFCC00"/><text x="9" y="13.5" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="11" fill="#1A1814">M</text></svg>';
+  }
+  return '<svg width="16" height="16" viewBox="0 0 24 24" style="flex-shrink:0;vertical-align:middle;margin-right:6px;opacity:0.65" aria-label="Train station" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="14" rx="3"/><path d="M4 10h16"/><path d="M8 16l-2 4"/><path d="M16 16l2 4"/><circle cx="8.5" cy="6.5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="6.5" r="1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>';
+}
+
 function renderClubAmenities(results) {
-  if (!results) return `<div class="club-amenity-none">Couldn't load nearby amenities — try refreshing.</div>`;
+  if (!results) return '<div class="club-amenity-none">Couldn\'t load nearby amenities — try refreshing.</div>';
   const groups = [
-    { key: 'train',       label: '🚂 Train stations' },
+    { key: 'train',       label: '🚉 Train &amp; Metro' },
     { key: 'pub',         label: '🍺 Pubs &amp; bars' },
     { key: 'supermarket', label: '🛒 Supermarkets' },
   ];
@@ -1090,15 +1100,14 @@ function renderClubAmenities(results) {
     const items = results[key];
     if (!items || !items.length) return;
     any = true;
-    html += `<div class="club-amenity-group">
-      <div class="club-amenity-group-label">${label}</div>
-      ${items.map(item => {
-        const d = item.dist < 0.1 ? `${Math.round(item.dist * 1000)}m` : `${item.dist.toFixed(1)} km`;
-        return `<div class="club-amenity-row"><span class="club-amenity-name">${item.name}</span><span class="club-amenity-dist">${d}</span></div>`;
-      }).join('')}
-    </div>`;
+    html += '<div class="club-amenity-group"><div class="club-amenity-group-label">' + label + '</div>' +
+      items.map(item => {
+        const d = item.dist < 0.1 ? Math.round(item.dist * 1000) + 'm' : item.dist.toFixed(1) + ' km';
+        const icon = item.trainType ? stationIcon(item.trainType) : '';
+        return '<div class="club-amenity-row"><span class="club-amenity-name" style="display:flex;align-items:center">' + icon + item.name + '</span><span class="club-amenity-dist">' + d + '</span></div>';
+      }).join('') + '</div>';
   });
-  if (!any) return `<div class="club-amenity-none">No train stations, pubs or supermarkets found within 10 miles.</div>`;
+  if (!any) return '<div class="club-amenity-none">No train stations, pubs or supermarkets found within 10 miles.</div>';
   return html;
 }
 
@@ -1649,7 +1658,11 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
         t.railway === 'station' || t.railway === 'halt' ||
         t.station === 'subway' || t.station === 'light_rail' ||
         t.network === 'London Underground' || t.network === 'Tyne and Wear Metro'
-      ) return 'train';
+      ) {
+        if (t.network === 'London Underground' || t.station === 'subway') return 'train_underground';
+        if (t.network === 'Tyne and Wear Metro') return 'train_metro';
+        return 'train_national';
+      }
       if (t.amenity === 'pub' || t.amenity === 'bar') return 'pub';
       if (t.shop === 'supermarket') return 'supermarket';
       return null;
@@ -1670,6 +1683,7 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
     ];
 
     const results = { train: [], pub: [], supermarket: [] };
+    const TRAIN_TYPES = new Set(['train_national','train_underground','train_metro']);
 
     data.elements.forEach(el => {
       const cat = categorise(el);
@@ -1684,7 +1698,9 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
         if (!SUPERMARKET_CHAINS.some(chain => nameLower.includes(chain))) return;
       }
       const dist = haversineKm(lat, lng, elLat(el), elLng(el));
-      results[cat].push({ name, dist });
+      const bucket = TRAIN_TYPES.has(cat) ? 'train' : cat;
+      const trainType = TRAIN_TYPES.has(cat) ? cat : undefined;
+      results[bucket].push({ name, dist, ...(trainType && { trainType }) });
     });
 
     // Sort by distance, dedupe by name, keep top 3
@@ -1704,10 +1720,10 @@ async function fetchNearbyAmenities(clubId, lat, lng) {
 }
 
 function renderAmenityPanel(results, tc) {
-  if (!results) return `<div class="fact-panel-none">Couldn't load nearby amenities.</div>`;
+  if (!results) return '<div class="fact-panel-none">Couldn\'t load nearby amenities.</div>';
 
   const groups = [
-    { key: 'train',       label: '🚂 Train stations' },
+    { key: 'train',       label: '🚉 Train & Metro' },
     { key: 'pub',         label: '🍺 Pubs & bars' },
     { key: 'supermarket', label: '🛒 Supermarkets' },
   ];
@@ -1719,16 +1735,15 @@ function renderAmenityPanel(results, tc) {
     const items = results[key];
     if (!items.length) return;
     anyResults = true;
-    html += `<div class="amenity-group">
-      <div class="amenity-group-label">${label}</div>
-      ${items.map(item => {
-        const distStr = item.dist < 0.1 ? `${Math.round(item.dist*1000)}m` : `${item.dist.toFixed(1)} km`;
-        return `<div class="amenity-row"><span class="amenity-name">${item.name}</span><span class="amenity-dist">${distStr}</span></div>`;
-      }).join('')}
-    </div>`;
+    html += '<div class="amenity-group"><div class="amenity-group-label">' + label + '</div>' +
+      items.map(item => {
+        const distStr = item.dist < 0.1 ? Math.round(item.dist*1000) + 'm' : item.dist.toFixed(1) + ' km';
+        const icon = item.trainType ? stationIcon(item.trainType) : '';
+        return '<div class="amenity-row"><span class="amenity-name" style="display:flex;align-items:center">' + icon + item.name + '</span><span class="amenity-dist">' + distStr + '</span></div>';
+      }).join('') + '</div>';
   });
 
-  if (!anyResults) return `<div class="fact-panel-none">No train stations, pubs or supermarkets found nearby.</div>`;
+  if (!anyResults) return '<div class="fact-panel-none">No train stations, pubs or supermarkets found nearby.</div>';
   return html;
 }
 
