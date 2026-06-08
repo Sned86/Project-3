@@ -1022,8 +1022,7 @@ function buildClubPage(c) {
             <div class="club-fact"><div class="club-fact-label">Ground</div><div class="club-fact-value">${c.ground || '—'}</div></div>
             <div class="club-fact"><div class="club-fact-label">Founded</div><div class="club-fact-value">${c.founded || '—'}</div></div>
             <div class="club-fact"><div class="club-fact-label">Capacity</div><div class="club-fact-value">${c.capacity ? c.capacity.toLocaleString() : '—'}</div></div>
-            <div class="club-fact"><div class="club-fact-label">League</div><div class="club-fact-value">${c.league}</div></div>
-            <div class="club-fact"><div class="club-fact-label">Step</div><div class="club-fact-value">Step ${c.step}</div></div>
+            <div class="club-fact" style="grid-column:1/-1"><div class="club-fact-label">League</div><div class="club-fact-value">${c.league}</div></div>
           </div>
         </div>
       </div>
@@ -1643,7 +1642,7 @@ function buildCard(raw) {
         <div class="card-meta-row"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${c.town||''}${c.county?', '+c.county:''}</div>
       </div>
       ${pills.length?`<div class="card-pills">${pills.slice(0,3).map(p=>`<span class="card-pill">${p}</span>`).join('')}</div>`:''}
-      <div class="card-footer">${starsHTML(c.rating)}<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${raw.groundshare_partner?'<span class="gs-badge">Groundshare</span>':''}<div class="step-badge">Step ${c.step}</div><button class="fav-btn ${isFav?'active':''}" data-club-id="${c.id}" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)">${isFav?'♥':'♡'}</button></div></div>
+      <div class="card-footer">${starsHTML(c.rating)}<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${c.groundsharePartner?'<span class="gs-badge">Groundshare</span>':''}<div class="step-badge">Step ${c.step}</div><button class="fav-btn ${isFav?'active':''}" data-club-id="${c.id}" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)">${isFav?'♥':'♡'}</button></div></div>
     </div>`;
   div.addEventListener('mouseenter',()=>{div.style.transform='translateY(-4px)';div.style.boxShadow=`0 16px 40px ${c.colours.primary}55`;});
   div.addEventListener('mouseleave',()=>{div.style.transform='translateY(0)';div.style.boxShadow=`0 4px 16px ${c.colours.primary}33`;});
