@@ -398,6 +398,11 @@
     .club-page-website { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; opacity: 0.7; text-decoration: none; transition: opacity 0.18s; margin-top: 10px; }
     .club-page-website:hover { opacity: 1; }
 
+    /* ── Groundshare ── */
+    .gs-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 2px; background: rgba(255,165,0,0.22); border: 1px solid rgba(255,165,0,0.42); color: #ffd280; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
+    .gs-hero-strip { display: flex; align-items: center; gap: 8px; padding: 9px 24px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.1); font-size: 13px; }
+    .gs-hero-strip-dot { width: 6px; height: 6px; border-radius: 50%; background: #ffd280; opacity: 0.7; flex-shrink: 0; }
+
     /* Body */
     .club-page-body { max-width: 960px; margin: 0 auto; padding: 36px 24px 72px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
     @media (max-width: 680px) {
@@ -1005,6 +1010,7 @@ function buildClubPage(c) {
           ${websiteHTML}
         </div>
       </div>
+      ${c.groundsharePartner ? `<div class="gs-hero-strip" style="color:${tc}"><div class="gs-hero-strip-dot"></div><span style="opacity:0.75">Plays as tenants at home of ${c.groundsharePartner}</span></div>` : ''}
     </div>
 
     <div class="club-page-body">
@@ -1016,7 +1022,8 @@ function buildClubPage(c) {
             <div class="club-fact"><div class="club-fact-label">Ground</div><div class="club-fact-value">${c.ground || '—'}</div></div>
             <div class="club-fact"><div class="club-fact-label">Founded</div><div class="club-fact-value">${c.founded || '—'}</div></div>
             <div class="club-fact"><div class="club-fact-label">Capacity</div><div class="club-fact-value">${c.capacity ? c.capacity.toLocaleString() : '—'}</div></div>
-            <div class="club-fact" style="grid-column:1/-1"><div class="club-fact-label">League</div><div class="club-fact-value">${c.league}</div></div>
+            <div class="club-fact"><div class="club-fact-label">League</div><div class="club-fact-value">${c.league}</div></div>
+            <div class="club-fact"><div class="club-fact-label">Step</div><div class="club-fact-value">Step ${c.step}</div></div>
           </div>
         </div>
       </div>
@@ -1202,7 +1209,7 @@ window.addEventListener('popstate', () => {
 /* ── Data ── */
 let ALL_CLUBS = [];
 const MOCK_CLUBS = [
-  { id:-1, name:'Bamber Bridge FC', nickname:'Brig', league_id:1, league_name:'Northern Premier League Premier Division', step:3, region:'North West', ground:'Sir Tom Finney Stadium', town:'Bamber Bridge', county:'Lancashire', founded:1952, capacity:3000, colour_primary:'#CC0000', colour_secondary:'#FFFFFF', colour_names:['Red','White'], badge_url:null, tags:['Car park','Covered terrace','Bar on site'], highlights:['Scenic ground','Historic club'], website:null, avg_overall:4.1, avg_location:3.9, avg_friendliness:4.6, avg_food:3.8, avg_facilities:4.0, rating_count:18, lat:53.7271, lng:-2.6570 },
+  { id:-1, name:'Bamber Bridge FC', nickname:'Brig', league_id:1, league_name:'Northern Premier League Premier Division', step:3, region:'North West', ground:'Sir Tom Finney Stadium', town:'Bamber Bridge', county:'Lancashire', founded:1952, capacity:3000, colour_primary:'#CC0000', colour_secondary:'#FFFFFF', colour_names:['Red','White'], badge_url:null, tags:['Car park','Covered terrace','Bar on site'], highlights:['Scenic ground','Historic club'], website:null, avg_overall:4.1, avg_location:3.9, avg_friendliness:4.6, avg_food:3.8, avg_facilities:4.0, rating_count:18, lat:53.7271, lng:-2.6570, groundshare_partner:'Preston Celtic FC' },
   { id:-2, name:'Dulwich Hamlet FC', nickname:'The Hamlet', league_id:2, league_name:'Isthmian League Premier Division', step:3, region:'South East', ground:'Champion Hill', town:'Dulwich', county:'Greater London', founded:1893, capacity:3000, colour_primary:'#FC03A5', colour_secondary:'#1C2B6B', colour_names:['Pink','Navy'], badge_url:null, tags:['Pie van','Real ale bar','Terracing','Dog friendly'], highlights:['Central location','Iconic ground','Vibrant matchday'], website:null, avg_overall:4.7, avg_location:4.2, avg_friendliness:4.9, avg_food:4.6, avg_facilities:4.3, rating_count:41, lat:51.4512, lng:-0.0796 },
 ];
 
@@ -1421,7 +1428,7 @@ function updateStats() {
 
 /* ── Normalise ── */
 function N(raw) {
-  return { ...raw, league: raw.league_name||'Unknown', colours: { primary: raw.colour_primary||'#444', secondary: raw.colour_secondary||'#fff' }, badgeUrl: raw.badge_url||null, highlights: raw.highlights||[], rating: raw.avg_overall, ratings: { location: raw.avg_location, friendliness: raw.avg_friendliness, food: raw.avg_food, facilities: raw.avg_facilities } };
+  return { ...raw, league: raw.league_name||'Unknown', colours: { primary: raw.colour_primary||'#444', secondary: raw.colour_secondary||'#fff' }, badgeUrl: raw.badge_url||null, highlights: raw.highlights||[], rating: raw.avg_overall, ratings: { location: raw.avg_location, friendliness: raw.avg_friendliness, food: raw.avg_food, facilities: raw.avg_facilities }, groundsharePartner: raw.groundshare_partner||null };
 }
 
 /* ── Helpers ── */
@@ -1636,7 +1643,7 @@ function buildCard(raw) {
         <div class="card-meta-row"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${c.town||''}${c.county?', '+c.county:''}</div>
       </div>
       ${pills.length?`<div class="card-pills">${pills.slice(0,3).map(p=>`<span class="card-pill">${p}</span>`).join('')}</div>`:''}
-      <div class="card-footer">${starsHTML(c.rating)}<div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><div class="step-badge">Step ${c.step}</div><button class="fav-btn ${isFav?'active':''}" data-club-id="${c.id}" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)">${isFav?'♥':'♡'}</button></div></div>
+      <div class="card-footer">${starsHTML(c.rating)}<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${raw.groundshare_partner?'<span class="gs-badge">Groundshare</span>':''}<div class="step-badge">Step ${c.step}</div><button class="fav-btn ${isFav?'active':''}" data-club-id="${c.id}" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)">${isFav?'♥':'♡'}</button></div></div>
     </div>`;
   div.addEventListener('mouseenter',()=>{div.style.transform='translateY(-4px)';div.style.boxShadow=`0 16px 40px ${c.colours.primary}55`;});
   div.addEventListener('mouseleave',()=>{div.style.transform='translateY(0)';div.style.boxShadow=`0 4px 16px ${c.colours.primary}33`;});
