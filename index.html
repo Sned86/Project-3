@@ -400,8 +400,8 @@
 
     /* ── Groundshare ── */
     .gs-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 2px; background: rgba(255,165,0,0.22); border: 1px solid rgba(255,165,0,0.42); color: #ffd280; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
-    .gs-hero-strip { display: flex; align-items: center; gap: 8px; padding: 9px 24px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.1); font-size: 13px; }
-    .gs-hero-strip-dot { width: 6px; height: 6px; border-radius: 50%; background: #ffd280; opacity: 0.7; flex-shrink: 0; }
+    .gs-hero-note { display: inline-flex; align-items: center; gap: 7px; margin-top: 10px; padding: 6px 12px; border-radius: 6px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,165,0,0.3); font-size: 12px; font-weight: 500; color: #ffd280; max-width: 100%; }
+    .gs-hero-note-icon { font-size: 13px; flex-shrink: 0; line-height: 1; }
 
     /* Body */
     .club-page-body { max-width: 960px; margin: 0 auto; padding: 36px 24px 72px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
@@ -1008,9 +1008,9 @@ function buildClubPage(c) {
             <span>${c.town || ''}${c.county ? ', ' + c.county : ''}</span>
           </div>
           ${websiteHTML}
+          ${c.groundsharePartner ? `<div class="gs-hero-note"><span class="gs-hero-note-icon">🏟</span><span>Plays as tenants at home of <strong>${c.groundsharePartner}</strong></span></div>` : ''}
         </div>
       </div>
-      ${c.groundsharePartner ? '<div class="gs-hero-strip" style="color:'+tc+'"><div class="gs-hero-strip-dot"></div><span style="opacity:0.75">Plays as tenants at home of '+c.groundsharePartner+'</span></div>' : ''}
     </div>
 
     <div class="club-page-body">
