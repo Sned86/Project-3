@@ -1216,7 +1216,7 @@ async function loadClubs() {
   document.getElementById('loading').style.display = 'block';
   let live = [];
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/clubs_with_ratings?select=*&order=name.asc`, { headers: HEADERS });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/clubs_with_ratings?select=*&is_active=eq.true&order=name.asc`, { headers: HEADERS });
     if (!res.ok) throw new Error(res.status);
     const raw = await res.json();
     live = raw.filter(c => c.name && c.step != null && c.league_id != null);
