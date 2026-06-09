@@ -1216,7 +1216,7 @@ async function loadClubs() {
   document.getElementById('loading').style.display = 'block';
   let live = [];
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/clubs_with_ratings?select=*&is_active=eq.true&order=name.asc`, { headers: HEADERS });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/clubs_with_ratings?select=*&order=name.asc`, { headers: HEADERS });
     if (!res.ok) throw new Error(res.status);
     const raw = await res.json();
     live = raw.filter(c => c.name && c.step != null && c.league_id != null);
@@ -1437,7 +1437,7 @@ function isLight(hex) {
 }
 function ini(name) { return name.split(' ').map(w=>w[0]).slice(0,3).join(''); }
 function starsHTML(v) {
-  if (v==null) return '<span style="opacity:0.4;font-size:12px">No ratings yet</span>';
+  if (v==null) return '';
   let h='<div class="star-row">';
   for(let s=1;s<=5;s++) h+=`<svg width="13" height="13" viewBox="0 0 20 20" fill="${s<=Math.round(v)?'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"><polygon points="10,2 12.5,7.5 18,8 14,12 15.5,18 10,15 4.5,18 6,12 2,8 7.5,7.5"/></svg>`;
   return h+`<span>${parseFloat(v).toFixed(1)}</span></div>`;
@@ -1475,7 +1475,7 @@ function buildHomeSections() {
       <div class="home-feat-footer">
         <div>
           <div class="home-feat-score">${c.rating!=null?parseFloat(c.rating).toFixed(1):'—'}</div>
-          <div class="home-feat-score-sub" style="color:${dimC}">${c.rating_count?c.rating_count+' rating'+(c.rating_count!==1?'s':''):'No ratings yet'}</div>
+          ${c.rating_count?`<div class="home-feat-score-sub" style="color:${dimC}">${c.rating_count} rating${c.rating_count!==1?'s':''}</div>`:''}
         </div>
         ${starsHTML(c.rating)}
       </div>
@@ -1641,8 +1641,8 @@ function buildCard(raw) {
         <div class="card-meta-row"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>${c.league}</div>
         <div class="card-meta-row"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${c.town||''}${c.county?', '+c.county:''}</div>
       </div>
-      ${pills.length?`<div class="card-pills">${pills.slice(0,3).map(p=>`<span class="card-pill">${p}</span>`).join('')}</div>`:''}
-      <div class="card-footer">${starsHTML(c.rating)}<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${c.groundsharePartner?'<span class="gs-badge">Groundshare</span>':''}<div class="step-badge">Step ${c.step}</div><button class="fav-btn ${isFav?'active':''}" data-club-id="${c.id}" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)">${isFav?'♥':'♡'}</button></div></div>
+      ${(pills.length||c.groundsharePartner)?`<div class="card-pills">${pills.slice(0,3).map(p=>`<span class="card-pill">${p}</span>`).join('')}${c.groundsharePartner?'<span class="gs-badge">Groundshare</span>':''}</div>`:''}
+      <div class="card-footer"><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><div class="step-badge">Step ${c.step}</div><button class="fav-btn ${isFav?'active':''}" data-club-id="${c.id}" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)">${isFav?'♥':'♡'}</button></div></div>
     </div>`;
   div.addEventListener('mouseenter',()=>{div.style.transform='translateY(-4px)';div.style.boxShadow=`0 16px 40px ${c.colours.primary}55`;});
   div.addEventListener('mouseleave',()=>{div.style.transform='translateY(0)';div.style.boxShadow=`0 4px 16px ${c.colours.primary}33`;});
@@ -1908,7 +1908,7 @@ function openModal(c) {
     <div class="facts-grid">${facts}</div>
     <div class="ratings-block">
       <div class="ratings-title" style="color:${dimC}">Community Ratings</div>
-      ${c.rating!=null?`<div class="overall-score">${parseFloat(c.rating).toFixed(1)}</div><div style="margin-bottom:14px">${starsHTML(c.rating)}${rc}</div>${ratingRows}`:`<div style="opacity:0.4;font-size:13px;padding:4px 0">No ratings yet — be the first!</div>`}
+      ${c.rating!=null?`<div class="overall-score">${parseFloat(c.rating).toFixed(1)}</div><div style="margin-bottom:14px">${starsHTML(c.rating)}${rc}</div>${ratingRows}`:""}
     </div>
     ${ratingSubmitBlock}
     ${tags?`<div class="tags-row" style="margin-top:14px">${tags}</div>`:''}`;
