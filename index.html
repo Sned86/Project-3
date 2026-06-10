@@ -47,10 +47,7 @@
     h1.home-title { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(28px, 4.5vw, 52px); font-weight: 800; line-height: 1.0; margin-bottom: 8px; letter-spacing: 0.01em; text-align: left; }
     .home-title-italic { font-style: normal; color: rgba(255,255,255,0.38); }
     .home-strapline { font-family: 'Barlow', sans-serif; font-style: italic; font-size: clamp(14px, 1.6vw, 16px); color: rgba(255,255,255,0.42); margin: 12px 0 0; max-width: 480px; line-height: 1.7; }
-    .btn-primary { padding: 14px 28px; background: #fff; color: #1A1814; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; letter-spacing: 0.02em; transition: all 0.2s; }
-    .btn-primary:hover { background: rgba(255,255,255,0.88); transform: translateY(-1px); }
-    .btn-ghost { padding: 14px 28px; background: transparent; color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
-    .btn-ghost:hover { border-color: rgba(255,255,255,0.38); color: #fff; }
+
 
     /* Stats strip */
     #home-stats { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 28px 24px; display: flex; justify-content: center; }
@@ -60,21 +57,12 @@
     .home-stat-label { font-size: 11px; color: rgba(255,255,255,0.32); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 6px; }
 
     /* Home sections */
-    .home-section { padding: 64px 24px; max-width: 960px; margin: 0 auto; }
-    .home-section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 28px; }
-    .home-section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 34px; font-weight: 700; letter-spacing: 0.01em; line-height: 1; }
-    .home-section-title em { font-style: normal; color: rgba(255,255,255,0.38); }
-    .home-section-link { font-size: 13px; color: rgba(255,255,255,0.35); cursor: pointer; transition: color 0.18s; border: none; background: none; font-family: 'DM Sans', sans-serif; padding: 0; }
-    .home-section-link:hover { color: rgba(255,255,255,0.75); }
+
 
     /* (featured grid + recent list CSS removed — ratings features deferred) */
 
     /* CTA block */
-    #home-cta { margin: 0 24px 64px; max-width: 912px; margin-left: auto; margin-right: auto; border-radius: 14px; overflow: hidden; position: relative; background: linear-gradient(135deg, rgba(230,57,70,0.12) 0%, rgba(2,62,138,0.18) 100%); border: 1px solid rgba(255,255,255,0.07); padding: 52px 48px; }
-    .home-cta-title { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(22px, 4vw, 36px); font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
-    .home-cta-title em { font-style: italic; color: rgba(255,255,255,0.48); }
-    .home-cta-sub { font-size: 15px; color: rgba(255,255,255,0.45); max-width: 460px; line-height: 1.75; margin-bottom: 28px; }
-    .home-cta-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
 
     /* ══════════════════════ CLUBS ══════════════════════ */
     #clubs-hero { padding: 36px 24px 28px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); }
@@ -241,7 +229,6 @@
     @media (max-width: 600px) {
       .facts-grid, .about-ratings-grid, .submit-grid { grid-template-columns: 1fr; }
       .home-stat { padding: 0 18px; }
-      #home-cta { padding: 36px 24px; }
       .nav-links { gap: 0; }
       .nav-link { padding: 7px 9px; font-size: 12px; }
     }
@@ -514,14 +501,6 @@
     <div class="home-stat"><span class="home-stat-n">6</span><div class="home-stat-label">Steps covered</div></div>
   </div>
 
-  <div id="home-cta">
-    <h2 class="home-cta-title">Been to a ground<br><em>we haven't covered?</em></h2>
-    <p class="home-cta-sub">Help build the most complete non-league ground directory in England. Add a club, rate a ground you've visited, or suggest a correction — every contribution matters.</p>
-    <div class="home-cta-actions">
-      <button class="btn-primary" onclick="showView('submit')">Get involved</button>
-      <button class="btn-ghost"   onclick="showView('about')">Learn more</button>
-    </div>
-  </div>
 
 </div>
 
