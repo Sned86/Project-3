@@ -66,30 +66,7 @@
     .home-section-link { font-size: 13px; color: rgba(255,255,255,0.35); cursor: pointer; transition: color 0.18s; border: none; background: none; font-family: 'DM Sans', sans-serif; padding: 0; }
     .home-section-link:hover { color: rgba(255,255,255,0.75); }
 
-    /* Featured grid */
-    #home-featured-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
-    .home-feat-card { border-radius: 10px; overflow: hidden; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s; }
-    .home-feat-card:hover { transform: translateY(-4px); }
-    .home-feat-inner { padding: 16px 18px 14px; }
-    .home-feat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .home-feat-badge { width: 36px; height: 36px; min-width: 36px; min-height: 36px; max-width: 36px; max-height: 36px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
-    .home-feat-badge-init { width: 36px; height: 36px; min-width: 36px; min-height: 36px; max-width: 36px; max-height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; letter-spacing: -0.02em; flex-shrink: 0; overflow: hidden; }
-    .home-feat-header-text { flex: 1; min-width: 0; }
-    .home-feat-step { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 2px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
-    .home-feat-name { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .home-feat-sub { font-size: 11px; opacity: 0.6; }
-    .home-feat-footer { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.12); display: flex; justify-content: space-between; align-items: center; }
-    .home-feat-score { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: 0.03em; }
-    .home-feat-score-sub { font-size: 10px; opacity: 0.45; letter-spacing: 0.04em; text-transform: uppercase; margin-top: 2px; }
-
-    /* Recent list */
-    #home-recent { display: flex; flex-direction: column; gap: 8px; }
-    .recent-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; cursor: pointer; transition: background 0.18s; }
-    .recent-row:hover { background: rgba(255,255,255,0.06); }
-    .recent-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .recent-name { font-size: 14px; font-weight: 700; flex: 1; }
-    .recent-meta { font-size: 12px; color: rgba(255,255,255,0.38); }
-    .recent-score { font-family: 'Libre Baskerville', serif; font-size: 18px; font-weight: 700; }
+    /* (featured grid + recent list CSS removed — ratings features deferred) */
 
     /* CTA block */
     #home-cta { margin: 0 24px 64px; max-width: 912px; margin-left: auto; margin-right: auto; border-radius: 14px; overflow: hidden; position: relative; background: linear-gradient(135deg, rgba(230,57,70,0.12) 0%, rgba(2,62,138,0.18) 100%); border: 1px solid rgba(255,255,255,0.07); padding: 52px 48px; }
@@ -533,24 +510,7 @@
   <div id="home-stats">
     <div class="home-stat"><span class="home-stat-n" id="home-stat-clubs">—</span><div class="home-stat-label">Clubs listed</div></div>
     <div class="home-stat"><span class="home-stat-n" id="home-stat-leagues">—</span><div class="home-stat-label">Leagues covered</div></div>
-    <div class="home-stat"><span class="home-stat-n" id="home-stat-ratings">—</span><div class="home-stat-label">Community ratings</div></div>
     <div class="home-stat"><span class="home-stat-n">6</span><div class="home-stat-label">Steps covered</div></div>
-  </div>
-
-  <div class="home-section">
-    <div class="home-section-header">
-      <h2 class="home-section-title">Highest Rated <em>Clubs</em></h2>
-      <button class="home-section-link" onclick="showView('clubs')">See all →</button>
-    </div>
-    <div id="home-featured-grid"><div style="color:rgba(255,255,255,0.18);font-size:13px;padding:16px 0">Loading…</div></div>
-  </div>
-
-  <div class="home-section" style="padding-top:0">
-    <div class="home-section-header">
-      <h2 class="home-section-title">Most <em>reviewed</em></h2>
-      <button class="home-section-link" onclick="showView('clubs')">Browse all →</button>
-    </div>
-    <div id="home-recent"><div style="color:rgba(255,255,255,0.18);font-size:13px;padding:16px 0">Loading…</div></div>
   </div>
 
   <div id="home-cta">
@@ -1229,7 +1189,7 @@ async function loadClubs() {
   buildFeaturedStrip();
   buildFilterSidebar();
   renderGrid();
-  buildHomeSections();
+
 }
 
 /* ── Favourites ── */
@@ -1419,10 +1379,8 @@ function buildMyRatingsSection() {
 /* ── Stats ── */
 function updateStats() {
   const leagues = new Set(ALL_CLUBS.map(c=>c.league_id).filter(Boolean));
-  const ratings = ALL_CLUBS.reduce((s,c)=>s+(parseInt(c.rating_count)||0),0);
   document.getElementById('home-stat-clubs').textContent   = ALL_CLUBS.length || '—';
   document.getElementById('home-stat-leagues').textContent = leagues.size || '—';
-  document.getElementById('home-stat-ratings').textContent = ratings > 0 ? ratings.toLocaleString() : '—';
 }
 
 /* ── Normalise ── */
@@ -1451,53 +1409,7 @@ function ratingPills(c) {
   return p;
 }
 
-/* ── Home sections ── */
-function buildHomeSections() {
-  const grid = document.getElementById('home-featured-grid');
-  const top = ALL_CLUBS.filter(c=>c.avg_overall!=null).sort((a,b)=>b.avg_overall-a.avg_overall).slice(0,4);
-  const toShow = top.length >= 2 ? top : ALL_CLUBS.slice(0,4);
-  grid.innerHTML = '';
-  toShow.forEach(raw => {
-    const c=N(raw); const tc=isLight(c.colours.primary)?'#111':'#fff';
-    const dimC=isLight(c.colours.primary)?'rgba(0,0,0,0.42)':'rgba(255,255,255,0.48)';
-    const card=document.createElement('div'); card.className='home-feat-card';
-    card.style.background=`linear-gradient(150deg,${c.colours.primary},color-mix(in srgb,${c.colours.primary} 55%,${c.colours.secondary} 45%))`;
-    card.style.color=tc; card.style.boxShadow=`0 6px 24px ${c.colours.primary}40`;
-    card.innerHTML=`<div class="home-feat-inner">
-      <div class="home-feat-header">
-        ${c.badgeUrl?`<img src="${c.badgeUrl}" class="home-feat-badge" alt="">`:`<div class="home-feat-badge-init" style="background:rgba(0,0,0,0.15);color:${tc}">${ini(c.name)}</div>`}
-        <div class="home-feat-header-text">
-          <div class="home-feat-name">${c.name}</div>
-          <div class="home-feat-sub">${c.ground||''}${c.town?' · '+c.town:''}</div>
-        </div>
-        <div class="home-feat-step">Step ${c.step}</div>
-      </div>
-      <div class="home-feat-footer">
-        <div>
-          <div class="home-feat-score">${c.rating!=null?parseFloat(c.rating).toFixed(1):'—'}</div>
-          ${c.rating_count?`<div class="home-feat-score-sub" style="color:${dimC}">${c.rating_count} rating${c.rating_count!==1?'s':''}</div>`:''}
-        </div>
-        ${starsHTML(c.rating)}
-      </div>
-    </div>`;
-    card.addEventListener('click',()=>openModal(c));
-    grid.appendChild(card);
-  });
 
-  const rec = document.getElementById('home-recent');
-  const byRatings = ALL_CLUBS.filter(c=>c.rating_count>=1).sort((a,b)=>b.rating_count-a.rating_count).slice(0,5);
-  const recShow = byRatings.length ? byRatings : ALL_CLUBS.slice(0,5);
-  rec.innerHTML='';
-  recShow.forEach(raw => {
-    const c=N(raw); const row=document.createElement('div'); row.className='recent-row';
-    row.innerHTML=`<div class="recent-dot" style="background:${c.colours.primary}"></div>
-      <div class="recent-name">${c.name}</div>
-      <div class="recent-meta">${c.town||''}${c.county?', '+c.county:''} · Step ${c.step}</div>
-      <div class="recent-score">${c.rating!=null?parseFloat(c.rating).toFixed(1):'—'}</div>`;
-    row.addEventListener('click',()=>openModal(c));
-    rec.appendChild(row);
-  });
-}
 
 function buildFeaturedStrip() {}
 
