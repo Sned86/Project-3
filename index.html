@@ -896,7 +896,7 @@ function buildClubPage(c) {
   // Photo hero: photo fills the whole hero, club colour washes in from the left
   const hasPhoto = !!c.groundPhotoUrl;
   // Colour wash fades from solid at left to transparent around 60%, revealing the photo on the right
-  const photoFadeBg = `linear-gradient(to right, ${c.colours.primary} 0%, ${c.colours.primary} 30%, color-mix(in srgb, ${c.colours.primary} 80%, transparent 20%) 46%, color-mix(in srgb, ${c.colours.primary} 45%, transparent 55%) 58%, color-mix(in srgb, ${c.colours.primary} 12%, transparent 88%) 75%, transparent 100%)`;
+  const photoFadeBg = `linear-gradient(to right, ${c.colours.primary} 0%, ${c.colours.primary} 48%, color-mix(in srgb, ${c.colours.primary} 80%, transparent 20%) 60%, color-mix(in srgb, ${c.colours.primary} 45%, transparent 55%) 72%, color-mix(in srgb, ${c.colours.primary} 12%, transparent 88%) 88%, transparent 100%)`;
   // Subtle vignette to stop the photo edges blowing out
   const photoVignette = `linear-gradient(to bottom, rgba(0,0,0,0.22) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.28) 100%)`;
 
