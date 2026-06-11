@@ -351,6 +351,8 @@
     /* Hero */
     .club-page-hero { position: relative; overflow: hidden; padding: 40px 24px 44px; margin-bottom: 0; }
     .club-page-hero-bg { position: absolute; inset: 0; pointer-events: none; }
+    .club-page-hero-photo { position: absolute; inset: 0; pointer-events: none; background-size: cover; background-position: center; }
+    .club-page-hero-photo-fade { position: absolute; inset: 0; pointer-events: none; }
     .club-page-hero-inner { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; display: flex; align-items: center; gap: 28px; }
     .club-page-badge-wrap { flex-shrink: 0; }
     .club-page-badge { width: 96px; height: 96px; object-fit: contain; filter: drop-shadow(0 4px 16px rgba(0,0,0,0.35)); display: block; }
@@ -891,6 +893,12 @@ function buildClubPage(c) {
   const tc = isLight(c.colours.primary) ? '#111' : '#fff';
   const dimC = isLight(c.colours.primary) ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.55)';
   const secBg = `linear-gradient(135deg, ${c.colours.primary} 0%, color-mix(in srgb, ${c.colours.primary} 45%, ${c.colours.secondary} 55%) 100%)`;
+  // Photo hero: photo fills the whole hero, club colour washes in from the left
+  const hasPhoto = !!c.groundPhotoUrl;
+  // Colour wash fades from solid at left to transparent around 60%, revealing the photo on the right
+  const photoFadeBg = `linear-gradient(to right, ${c.colours.primary} 0%, ${c.colours.primary} 30%, color-mix(in srgb, ${c.colours.primary} 80%, transparent 20%) 46%, color-mix(in srgb, ${c.colours.primary} 45%, transparent 55%) 58%, color-mix(in srgb, ${c.colours.primary} 12%, transparent 88%) 75%, transparent 100%)`;
+  // Subtle vignette to stop the photo edges blowing out
+  const photoVignette = `linear-gradient(to bottom, rgba(0,0,0,0.22) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.28) 100%)`;
 
   const badgeHTML = c.badgeUrl
     ? `<img src="${c.badgeUrl}" class="club-page-badge" alt="">`
@@ -933,7 +941,12 @@ function buildClubPage(c) {
 
   document.getElementById('club-page-content').innerHTML = `
     <div class="club-page-hero" style="color:${tc}">
-      <div class="club-page-hero-bg" style="background:${secBg}"></div>
+      ${hasPhoto
+        ? `<div class="club-page-hero-photo" style="background-image:url('${c.groundPhotoUrl}')"></div>
+           <div class="club-page-hero-photo-fade" style="background:${photoFadeBg}"></div>
+           <div class="club-page-hero-photo-fade" style="background:${photoVignette}"></div>`
+        : `<div class="club-page-hero-bg" style="background:${secBg}"></div>`
+      }
       <div class="club-page-hero-inner">
         <div class="club-page-badge-wrap">${badgeHTML}</div>
         <div class="club-page-hero-text">
@@ -1365,7 +1378,7 @@ function updateStats() {
 
 /* ── Normalise ── */
 function N(raw) {
-  return { ...raw, league: raw.league_name||'Unknown', colours: { primary: raw.colour_primary||'#444', secondary: raw.colour_secondary||'#fff' }, badgeUrl: raw.badge_url||null, highlights: raw.highlights||[], rating: raw.avg_overall, ratings: { location: raw.avg_location, friendliness: raw.avg_friendliness, food: raw.avg_food, facilities: raw.avg_facilities }, groundsharePartner: raw.groundshare_partner||null };
+  return { ...raw, league: raw.league_name||'Unknown', colours: { primary: raw.colour_primary||'#444', secondary: raw.colour_secondary||'#fff' }, badgeUrl: raw.badge_url||null, highlights: raw.highlights||[], rating: raw.avg_overall, ratings: { location: raw.avg_location, friendliness: raw.avg_friendliness, food: raw.avg_food, facilities: raw.avg_facilities }, groundsharePartner: raw.groundshare_partner||null, groundPhotoUrl: raw.ground_photo_url||null };
 }
 
 /* ── Helpers ── */
