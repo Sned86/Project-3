@@ -113,7 +113,26 @@
     .league-sub-inner { padding: 2px 0 6px 8px; display: flex; flex-direction: column; gap: 1px; }
     #browse-divider { width: 1px; background: rgba(255,255,255,0.06); flex-shrink: 0; align-self: stretch; margin: 28px 28px 0; }
     #browse-main { flex: 1; min-width: 0; padding-top: 28px; }
-    .result-count { font-size: 12px; color: rgba(255,255,255,0.28); margin-bottom: 18px; letter-spacing: 0.02em; }
+    /* ── Sort bar ── */
+    #sort-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+    .result-count { font-size: 12px; color: rgba(255,255,255,0.28); letter-spacing: 0.02em; flex: 1; min-width: 80px; }
+    .sort-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); white-space: nowrap; }
+    .sort-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+    .sort-pill { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); background: none; color: rgba(255,255,255,0.38); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; white-space: nowrap; }
+    .sort-pill:hover { border-color: rgba(255,255,255,0.28); color: rgba(255,255,255,0.75); }
+    .sort-pill.active { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); color: #fff; }
+    /* Postcode override row (shown when Distance sort active) */
+    #dist-postcode-row { display: none; align-items: center; gap: 8px; margin-bottom: 14px; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; flex-wrap: wrap; }
+    #dist-postcode-row.visible { display: flex; }
+    .dist-postcode-label { font-size: 12px; color: rgba(255,255,255,0.45); white-space: nowrap; }
+    #dist-postcode-source { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55); }
+    #dist-postcode-override { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; width: 110px; text-transform: uppercase; transition: border-color 0.2s; }
+    #dist-postcode-override:focus { border-color: rgba(255,255,255,0.3); }
+    #dist-postcode-override::placeholder { color: rgba(255,255,255,0.2); text-transform: none; }
+    #dist-postcode-go { padding: 6px 12px; background: rgba(255,255,255,0.9); color: #1A1814; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; white-space: nowrap; }
+    #dist-postcode-go:hover { background: #fff; }
+    /* Distance badge on cards */
+    .card-dist { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; opacity: 0.72; white-space: nowrap; }
     .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 14px; }
     #featured-section { display: none; }
     #grid-section { padding: 0; }
@@ -557,7 +576,25 @@
     <div id="browse-divider"></div>
 
     <div id="browse-main">
-      <div class="result-count" id="result-count"></div>
+      <div id="sort-bar">
+        <div class="result-count" id="result-count"></div>
+        <span class="sort-label">Sort</span>
+        <div class="sort-pills">
+          <button class="sort-pill active" data-sort="name-asc" onclick="setSort('name-asc')">A–Z</button>
+          <button class="sort-pill" data-sort="name-desc" onclick="setSort('name-desc')">Z–A</button>
+          <button class="sort-pill" data-sort="step-asc" onclick="setSort('step-asc')">Step ↑</button>
+          <button class="sort-pill" data-sort="step-desc" onclick="setSort('step-desc')">Step ↓</button>
+          <button class="sort-pill" data-sort="distance" onclick="setSort('distance')" id="sort-pill-distance">📍 Distance</button>
+        </div>
+      </div>
+      <div id="dist-postcode-row">
+        <span class="dist-postcode-label">Sorting from:</span>
+        <span id="dist-postcode-source">—</span>
+        <span class="dist-postcode-label" style="margin-left:8px">or use:</span>
+        <input id="dist-postcode-override" type="text" placeholder="Override postcode" maxlength="8" />
+        <button id="dist-postcode-go" onclick="applyPostcodeOverride()">Use this</button>
+        <button onclick="clearPostcodeOverride()" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;padding:0 4px;font-family:'DM Sans',sans-serif;" title="Clear override">Reset</button>
+      </div>
       <div id="featured-section"></div>
       <div id="grid-section">
         <div id="loading"><div class="spinner"></div>Loading clubs…</div>
@@ -737,11 +774,13 @@ sb.auth.onAuthStateChange(async (event, session) => {
   updateNavAuth();
   if (CURRENT_USER) {
     await Promise.all([loadFavourites(), loadMyRatings(), loadUserProfile()]);
+    updateDistPostcodeRow();
     renderGrid(); // re-render cards to show heart states
   } else {
     USER_FAVOURITES = new Set();
     USER_RATINGS = {};
     USER_POSTCODE = null;
+    updateDistPostcodeRow();
     renderGrid();
   }
 });
@@ -1404,6 +1443,8 @@ function buildFeaturedStrip() {}
 /* ── Browse: filter sidebar ── */
 // All filters are Sets for multi-select; empty Set = "all"
 let activeSteps=new Set(), activeLeagues=new Set(), activeCounties=new Set(), searchQuery='';
+let activeSort = 'name-asc';
+let DIST_OVERRIDE_LAT = null, DIST_OVERRIDE_LNG = null, DIST_OVERRIDE_PC = null;
 let openLeagueGroups=new Set(); // tracks which step sub-groups are open inside the League accordion
 
 function toggleSet(set, value) {
@@ -1527,12 +1568,13 @@ function buildFilterSidebar() {
 document.addEventListener('click',e=>{ const trigger=e.target.closest('.accordion-trigger'); if(!trigger) return; const key=trigger.dataset.accordion; const body=document.getElementById('accordion-body-'+key); if(!body) return; trigger.classList.toggle('open'); body.classList.toggle('open'); });
 
 /* ── Browse: grid ── */
-function buildCard(raw) {
+function buildCard(raw, distKm) {
   const c=N(raw); const tc=isLight(c.colours.primary)?'#111':'#fff';
   const div=document.createElement('div'); div.className='club-card';
   div.style.background=`linear-gradient(135deg,${c.colours.primary} 30%,color-mix(in srgb,${c.colours.primary} 30%,${c.colours.secondary} 70%) 100%)`; div.style.color=tc; div.style.boxShadow=`0 4px 16px ${c.colours.primary}33`;
   const pills=[...(c.highlights||[]),...ratingPills(c)];
   const isFav = USER_FAVOURITES.has(c.id);
+  const distStr = distKm != null ? (distKm < 1 ? Math.round(distKm*1000)+'m' : distKm.toFixed(1)+' km') : null;
   div.innerHTML=`<div class="card-stripe" style="background:linear-gradient(90deg,${c.colours.primary} 50%,${c.colours.secondary} 50%)"></div>
     <div class="card-body">
       <div class="card-header">
@@ -1544,7 +1586,7 @@ function buildCard(raw) {
         <div class="card-meta-row"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${c.town||''}${c.county?', '+c.county:''}</div>
       </div>
       ${pills.length?`<div class="card-pills">${pills.slice(0,3).map(p=>`<span class="card-pill">${p}</span>`).join('')}</div>`:''}
-      <div class="card-footer">${c.groundsharePartner?'<span class="gs-badge">Groundshare</span>':'<span></span>'}<div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><div class="step-badge">Step ${c.step}</div><button class="fav-btn ${isFav?'active':''}" data-club-id="${c.id}" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)">${isFav?'♥':'♡'}</button></div></div>
+      <div class="card-footer">${c.groundsharePartner?'<span class="gs-badge">Groundshare</span>':'<span></span>'}<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${distStr!=null?`<span class="card-dist">${distStr}</span>`:''}<div class="step-badge">Step ${c.step}</div><button class="fav-btn ${isFav?'active':''}" data-club-id="${c.id}" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)">${isFav?'♥':'♡'}</button></div></div>
     </div>`;
   div.addEventListener('mouseenter',()=>{div.style.transform='translateY(-4px)';div.style.boxShadow=`0 16px 40px ${c.colours.primary}55`;});
   div.addEventListener('mouseleave',()=>{div.style.transform='translateY(0)';div.style.boxShadow=`0 4px 16px ${c.colours.primary}33`;});
@@ -1553,17 +1595,102 @@ function buildCard(raw) {
 function renderGrid() {
   const grid=document.getElementById('clubs-grid'), noRes=document.getElementById('no-results'), count=document.getElementById('result-count');
   grid.innerHTML='';
-  const f=ALL_CLUBS.filter(raw=>{
+  let f=ALL_CLUBS.filter(raw=>{
     const c=N(raw), q=searchQuery.toLowerCase();
     return (c.name.toLowerCase().includes(q)||(c.town||'').toLowerCase().includes(q)||(c.county||'').toLowerCase().includes(q)||c.league.toLowerCase().includes(q))
       &&(activeSteps.size===0   || activeSteps.has(String(c.step)))
       &&(activeLeagues.size===0  || activeLeagues.has(c.league))
       &&(activeCounties.size===0 || activeCounties.has(raw.county||''));
   });
+
+  // Resolve active lat/lng for distance (override postcode takes priority over saved profile)
+  const activeLat = DIST_OVERRIDE_LAT ?? CURRENT_USER?.user_metadata?.lat ?? null;
+  const activeLng = DIST_OVERRIDE_LNG ?? CURRENT_USER?.user_metadata?.lng ?? null;
+  const hasLocation = activeLat != null && activeLng != null;
+
+  // Compute distances for all filtered clubs if we have a location
+  const distMap = new Map();
+  if (hasLocation) {
+    f.forEach(raw => {
+      if (raw.lat && raw.lng) distMap.set(raw.id, haversineKm(activeLat, activeLng, raw.lat, raw.lng));
+    });
+  }
+
+  // Sort
+  if (activeSort === 'name-asc')  f.sort((a,b)=>a.name.localeCompare(b.name));
+  else if (activeSort === 'name-desc') f.sort((a,b)=>b.name.localeCompare(a.name));
+  else if (activeSort === 'step-asc')  f.sort((a,b)=>a.step-b.step);
+  else if (activeSort === 'step-desc') f.sort((a,b)=>b.step-a.step);
+  else if (activeSort === 'distance') {
+    f.sort((a,b)=>{
+      const da = distMap.get(a.id) ?? Infinity;
+      const db = distMap.get(b.id) ?? Infinity;
+      return da - db;
+    });
+  }
+
   count.textContent=`${f.length} club${f.length!==1?'s':''} shown`;
   noRes.style.display=f.length===0?'block':'none';
-  f.forEach(raw=>grid.appendChild(buildCard(raw)));
+  // Pass distance to buildCard: always show if we have a location, regardless of sort
+  f.forEach(raw => grid.appendChild(buildCard(raw, hasLocation ? (distMap.get(raw.id) ?? null) : null)));
 }
+/* ── Sort ── */
+function setSort(key) {
+  activeSort = key;
+  document.querySelectorAll('.sort-pill').forEach(p => p.classList.toggle('active', p.dataset.sort === key));
+  updateDistPostcodeRow();
+  renderGrid();
+}
+
+function updateDistPostcodeRow() {
+  const row = document.getElementById('dist-postcode-row');
+  const sourceEl = document.getElementById('dist-postcode-source');
+  if (activeSort !== 'distance') { row.classList.remove('visible'); return; }
+  row.classList.add('visible');
+  // Determine active source label
+  if (DIST_OVERRIDE_PC) {
+    sourceEl.textContent = DIST_OVERRIDE_PC;
+  } else {
+    const savedPc = CURRENT_USER?.user_metadata?.postcode;
+    sourceEl.textContent = savedPc || 'No postcode set';
+    if (!savedPc && !DIST_OVERRIDE_LAT) {
+      sourceEl.style.color = 'rgba(255,200,100,0.7)';
+    } else {
+      sourceEl.style.color = '';
+    }
+  }
+}
+
+async function applyPostcodeOverride() {
+  const input = document.getElementById('dist-postcode-override');
+  const pc = input.value.trim().toUpperCase();
+  if (!pc) return;
+  const btn = document.getElementById('dist-postcode-go');
+  btn.textContent = 'Looking up…'; btn.disabled = true;
+  try {
+    const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`);
+    const data = await res.json();
+    if (data.status !== 200) throw new Error('Invalid postcode');
+    DIST_OVERRIDE_LAT = data.result.latitude;
+    DIST_OVERRIDE_LNG = data.result.longitude;
+    DIST_OVERRIDE_PC = pc;
+    input.value = '';
+    updateDistPostcodeRow();
+    renderGrid();
+  } catch {
+    input.style.borderColor = 'rgba(220,80,80,0.6)';
+    setTimeout(() => { input.style.borderColor = ''; }, 1500);
+  }
+  btn.textContent = 'Use this'; btn.disabled = false;
+}
+
+function clearPostcodeOverride() {
+  DIST_OVERRIDE_LAT = null; DIST_OVERRIDE_LNG = null; DIST_OVERRIDE_PC = null;
+  document.getElementById('dist-postcode-override').value = '';
+  updateDistPostcodeRow();
+  renderGrid();
+}
+
 document.getElementById('search-input').addEventListener('input',e=>{
   searchQuery=e.target.value;
   document.getElementById('search-clear').classList.toggle('visible', searchQuery.length > 0);
@@ -1585,6 +1712,9 @@ function clearAllFilters() {
   document.getElementById('search-clear').classList.remove('visible');
   activeSteps=new Set(); activeLeagues=new Set(); activeCounties=new Set();
   openLeagueGroups=new Set();
+  activeSort='name-asc';
+  document.querySelectorAll('.sort-pill').forEach(p => p.classList.toggle('active', p.dataset.sort === 'name-asc'));
+  updateDistPostcodeRow();
   buildFilterSidebar();
   updateClearFiltersBtn();
   renderGrid();
