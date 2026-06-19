@@ -71,10 +71,16 @@
     #browse-body { display: flex; align-items: flex-start; max-width: 1140px; margin: 0 auto; padding: 0 24px 60px; }
     #filter-sidebar { flex: 0 0 210px; padding: 28px 0 0; position: sticky; top: 92px; max-height: calc(100vh - 112px); overflow-y: auto; scrollbar-width: none; }
     #filter-sidebar::-webkit-scrollbar { display: none; }
-    #search-wrap { margin-bottom: 20px; }
-    #search-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif; transition: border-color 0.2s; }
+    #search-wrap { margin-bottom: 12px; position: relative; }
+    #search-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 34px 10px 14px; color: #fff; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif; transition: border-color 0.2s; }
     #search-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.07); }
     #search-input::placeholder { color: rgba(255,255,255,0.28); }
+    #search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,0.35); cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 4px; display: none; transition: color 0.15s; }
+    #search-clear:hover { color: rgba(255,255,255,0.75); }
+    #search-clear.visible { display: block; }
+    #clear-filters-btn { display: none; width: 100%; margin-bottom: 16px; padding: 7px 12px; background: none; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; }
+    #clear-filters-btn:hover { border-color: rgba(255,255,255,0.28); color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.05); }
+    #clear-filters-btn.visible { display: block; }
     #active-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
     .filter-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 4px 8px 4px 10px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
     .filter-chip:hover { background: rgba(255,255,255,0.2); }
@@ -351,8 +357,6 @@
     /* Hero */
     .club-page-hero { position: relative; overflow: hidden; padding: 40px 24px 44px; margin-bottom: 0; }
     .club-page-hero-bg { position: absolute; inset: 0; pointer-events: none; }
-    .club-page-hero-photo { position: absolute; inset: 0; pointer-events: none; background-size: cover; background-position: center; }
-    .club-page-hero-photo-fade { position: absolute; inset: 0; pointer-events: none; }
     .club-page-hero-inner { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; display: flex; align-items: center; gap: 28px; }
     .club-page-badge-wrap { flex-shrink: 0; }
     .club-page-badge { width: 96px; height: 96px; object-fit: contain; filter: drop-shadow(0 4px 16px rgba(0,0,0,0.35)); display: block; }
@@ -520,7 +524,9 @@
     <aside id="filter-sidebar">
       <div id="search-wrap">
         <input type="text" id="search-input" placeholder="Search clubs, towns…" />
+        <button id="search-clear" title="Clear search" onclick="clearSearch()">×</button>
       </div>
+      <button id="clear-filters-btn" onclick="clearAllFilters()">Clear all filters</button>
       <div id="active-chips"></div>
       <div class="filter-accordion">
         <button class="accordion-trigger" data-accordion="step">
@@ -893,12 +899,6 @@ function buildClubPage(c) {
   const tc = isLight(c.colours.primary) ? '#111' : '#fff';
   const dimC = isLight(c.colours.primary) ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.55)';
   const secBg = `linear-gradient(135deg, ${c.colours.primary} 0%, color-mix(in srgb, ${c.colours.primary} 45%, ${c.colours.secondary} 55%) 100%)`;
-  // Photo hero: photo fills the whole hero, club colour washes in from the left
-  const hasPhoto = !!c.groundPhotoUrl;
-  // Colour wash fades from solid at left to transparent around 60%, revealing the photo on the right
-  const photoFadeBg = `linear-gradient(to right, ${c.colours.primary} 0%, ${c.colours.primary} 48%, color-mix(in srgb, ${c.colours.primary} 80%, transparent 20%) 60%, color-mix(in srgb, ${c.colours.primary} 45%, transparent 55%) 72%, color-mix(in srgb, ${c.colours.primary} 12%, transparent 88%) 88%, transparent 100%)`;
-  // Subtle vignette to stop the photo edges blowing out
-  const photoVignette = `linear-gradient(to bottom, rgba(0,0,0,0.22) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.28) 100%)`;
 
   const badgeHTML = c.badgeUrl
     ? `<img src="${c.badgeUrl}" class="club-page-badge" alt="">`
@@ -941,12 +941,7 @@ function buildClubPage(c) {
 
   document.getElementById('club-page-content').innerHTML = `
     <div class="club-page-hero" style="color:${tc}">
-      ${hasPhoto
-        ? `<div class="club-page-hero-photo" style="background-image:url('${c.groundPhotoUrl}')"></div>
-           <div class="club-page-hero-photo-fade" style="background:${photoFadeBg}"></div>
-           <div class="club-page-hero-photo-fade" style="background:${photoVignette}"></div>`
-        : `<div class="club-page-hero-bg" style="background:${secBg}"></div>`
-      }
+      <div class="club-page-hero-bg" style="background:${secBg}"></div>
       <div class="club-page-hero-inner">
         <div class="club-page-badge-wrap">${badgeHTML}</div>
         <div class="club-page-hero-text">
@@ -1378,7 +1373,7 @@ function updateStats() {
 
 /* ── Normalise ── */
 function N(raw) {
-  return { ...raw, league: raw.league_name||'Unknown', colours: { primary: raw.colour_primary||'#444', secondary: raw.colour_secondary||'#fff' }, badgeUrl: raw.badge_url||null, highlights: raw.highlights||[], rating: raw.avg_overall, ratings: { location: raw.avg_location, friendliness: raw.avg_friendliness, food: raw.avg_food, facilities: raw.avg_facilities }, groundsharePartner: raw.groundshare_partner||null, groundPhotoUrl: raw.ground_photo_url||null };
+  return { ...raw, league: raw.league_name||'Unknown', colours: { primary: raw.colour_primary||'#444', secondary: raw.colour_secondary||'#fff' }, badgeUrl: raw.badge_url||null, highlights: raw.highlights||[], rating: raw.avg_overall, ratings: { location: raw.avg_location, friendliness: raw.avg_friendliness, food: raw.avg_food, facilities: raw.avg_facilities }, groundsharePartner: raw.groundshare_partner||null };
 }
 
 /* ── Helpers ── */
@@ -1525,6 +1520,8 @@ function buildFilterSidebar() {
       if(body&&!body.classList.contains('open')){ body.classList.add('open'); trigger&&trigger.classList.add('open'); }
     }
   });
+
+  updateClearFiltersBtn();
 }
 
 document.addEventListener('click',e=>{ const trigger=e.target.closest('.accordion-trigger'); if(!trigger) return; const key=trigger.dataset.accordion; const body=document.getElementById('accordion-body-'+key); if(!body) return; trigger.classList.toggle('open'); body.classList.toggle('open'); });
@@ -1567,7 +1564,36 @@ function renderGrid() {
   noRes.style.display=f.length===0?'block':'none';
   f.forEach(raw=>grid.appendChild(buildCard(raw)));
 }
-document.getElementById('search-input').addEventListener('input',e=>{searchQuery=e.target.value;renderGrid();});
+document.getElementById('search-input').addEventListener('input',e=>{
+  searchQuery=e.target.value;
+  document.getElementById('search-clear').classList.toggle('visible', searchQuery.length > 0);
+  updateClearFiltersBtn();
+  renderGrid();
+});
+
+function clearSearch() {
+  searchQuery='';
+  document.getElementById('search-input').value='';
+  document.getElementById('search-clear').classList.remove('visible');
+  updateClearFiltersBtn();
+  renderGrid();
+}
+
+function clearAllFilters() {
+  searchQuery='';
+  document.getElementById('search-input').value='';
+  document.getElementById('search-clear').classList.remove('visible');
+  activeSteps=new Set(); activeLeagues=new Set(); activeCounties=new Set();
+  openLeagueGroups=new Set();
+  buildFilterSidebar();
+  updateClearFiltersBtn();
+  renderGrid();
+}
+
+function updateClearFiltersBtn() {
+  const hasAny = searchQuery || activeSteps.size || activeLeagues.size || activeCounties.size;
+  document.getElementById('clear-filters-btn').classList.toggle('visible', !!hasAny);
+}
 
 /* ── Modal ── */
 let MODAL_RATING_STATE = { location: 0, friendliness: 0, food: 0, facilities: 0 };
