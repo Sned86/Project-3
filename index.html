@@ -345,10 +345,16 @@
     /* Profile settings */
     .settings-grid { display: grid; gap: 14px; }
 
-    /* ── Favourite heart button on cards ── */
-    .fav-btn { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; width: 30px; height: 30px; min-width: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s; font-size: 14px; flex-shrink: 0; }
-    .fav-btn:hover { background: rgba(0,0,0,0.35); border-color: rgba(255,255,255,0.3); }
+    /* ── Favourite heart + Wishlist flag buttons on cards ── */
+    .fav-btn, .wish-btn { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; width: 30px; height: 30px; min-width: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s; font-size: 14px; flex-shrink: 0; }
+    .fav-btn:hover, .wish-btn:hover { background: rgba(0,0,0,0.35); border-color: rgba(255,255,255,0.3); }
     .fav-btn.active { background: rgba(220,50,50,0.3); border-color: rgba(220,80,80,0.5); }
+    .wish-btn.active { background: rgba(70,130,220,0.32); border-color: rgba(90,150,230,0.55); }
+    /* Page (pill, labelled) variant used on the club detail hero */
+    .fav-btn-page, .wish-btn-page { width: auto; height: auto; min-width: 0; border-radius: 20px; padding: 8px 16px; gap: 7px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; }
+    .fav-btn-page.active { background: rgba(220,50,50,0.35) !important; border-color: rgba(220,80,80,0.6) !important; }
+    .wish-btn-page.active { background: rgba(70,130,220,0.35) !important; border-color: rgba(90,150,230,0.6) !important; }
+    .club-page-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
     /* ── Rating submission in modal ── */
     .rating-submit-block { background: rgba(0,0,0,0.12); border-radius: 8px; padding: 16px; margin-top: 14px; }
@@ -724,6 +730,12 @@
       <div id="fav-grid" class="fav-grid"></div>
     </div>
 
+    <!-- Wishlist -->
+    <div class="account-section">
+      <div class="account-section-title">Wishlist <em id="wishlist-count-label"></em></div>
+      <div id="wishlist-grid" class="fav-grid"></div>
+    </div>
+
     <!-- My Ratings -->
     <div class="account-section">
       <div class="account-section-title">My Ratings <em id="my-ratings-count-label"></em></div>
@@ -768,6 +780,7 @@ const HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_A
 /* ── Auth state ── */
 let CURRENT_USER = null;
 let USER_FAVOURITES = new Set(); // club ids
+let USER_WISHLIST = new Set();   // club ids — "intend to visit"
 let USER_RATINGS = {};           // club_id -> {location,friendliness,food,facilities}
 let USER_POSTCODE = null;
 
@@ -776,11 +789,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
   CURRENT_USER = session?.user || null;
   updateNavAuth();
   if (CURRENT_USER) {
-    await Promise.all([loadFavourites(), loadMyRatings(), loadUserProfile()]);
+    await Promise.all([loadFavourites(), loadWishlist(), loadMyRatings(), loadUserProfile()]);
     updateDistPostcodeRow();
     renderGrid(); // re-render cards to show heart states
   } else {
     USER_FAVOURITES = new Set();
+    USER_WISHLIST = new Set();
     USER_RATINGS = {};
     USER_POSTCODE = null;
     updateDistPostcodeRow();
@@ -942,6 +956,8 @@ function buildClubPage(c) {
   const dimC = isLight(c.colours.primary) ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.55)';
   const secBg = `linear-gradient(135deg, ${c.colours.primary} 0%, color-mix(in srgb, ${c.colours.primary} 45%, ${c.colours.secondary} 55%) 100%)`;
   const hasPhoto = !!c.groundPhotoUrl;
+  const isFav = USER_FAVOURITES.has(c.id);
+  const isWish = USER_WISHLIST.has(c.id);
 
   // Hero background: photo + colour wash (from ~48%) + vignette, or flat gradient fallback
   const heroBgHTML = hasPhoto
@@ -1007,6 +1023,10 @@ function buildClubPage(c) {
           </div>
           ${websiteHTML}
           ${c.groundsharePartner ? `<div class="gs-hero-note"><span class="gs-hero-note-icon">🏟</span><span>Groundshares with <strong>${c.groundsharePartner}</strong></span></div>` : ''}
+          <div class="club-page-actions">
+            <button class="fav-btn fav-btn-page ${isFav?'active':''}" data-club-id="${c.id}" data-label="Favourite" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)" style="color:${tc};border-color:${tc}40;background:${tc}14">${isFav?'♥':'♡'} <span>Favourite</span></button>
+            <button class="wish-btn wish-btn-page ${isWish?'active':''}" data-club-id="${c.id}" data-label="Want to visit" title="${isWish?'Remove from wishlist':'Add to wishlist'}" onclick="toggleWishlist(${c.id},event)" style="color:${tc};border-color:${tc}40;background:${tc}14">${isWish?'⚑':'⚐'} <span>Want to visit</span></button>
+          </div>
         </div>
       </div>
     </div>
@@ -1248,11 +1268,41 @@ async function toggleFavourite(clubId, e) {
     await sb.from('favourites').insert({ club_id: clubId, user_id: CURRENT_USER.id });
     USER_FAVOURITES.add(clubId);
   }
-  // Update all heart buttons for this club
+  // Update all heart buttons for this club (card + club page variants)
   document.querySelectorAll(`.fav-btn[data-club-id="${clubId}"]`).forEach(btn => {
-    btn.classList.toggle('active', USER_FAVOURITES.has(clubId));
-    btn.title = USER_FAVOURITES.has(clubId) ? 'Remove from favourites' : 'Add to favourites';
-    btn.innerHTML = USER_FAVOURITES.has(clubId) ? '♥' : '♡';
+    const active = USER_FAVOURITES.has(clubId);
+    btn.classList.toggle('active', active);
+    btn.title = active ? 'Remove from favourites' : 'Add to favourites';
+    const icon = active ? '♥' : '♡';
+    btn.innerHTML = btn.dataset.label ? `${icon} <span>${btn.dataset.label}</span>` : icon;
+  });
+}
+
+/* ── Wishlist ("intend to visit") ── */
+async function loadWishlist() {
+  if (!CURRENT_USER) return;
+  const { data, error } = await sb.from('wishlist').select('club_id');
+  if (!error && data) USER_WISHLIST = new Set(data.map(r => r.club_id));
+}
+
+async function toggleWishlist(clubId, e) {
+  e && e.stopPropagation();
+  if (!CURRENT_USER) { openAuth('signin'); return; }
+  const isWish = USER_WISHLIST.has(clubId);
+  if (isWish) {
+    await sb.from('wishlist').delete().eq('club_id', clubId).eq('user_id', CURRENT_USER.id);
+    USER_WISHLIST.delete(clubId);
+  } else {
+    await sb.from('wishlist').insert({ club_id: clubId, user_id: CURRENT_USER.id });
+    USER_WISHLIST.add(clubId);
+  }
+  // Update all flag buttons for this club (card + club page variants)
+  document.querySelectorAll(`.wish-btn[data-club-id="${clubId}"]`).forEach(btn => {
+    const active = USER_WISHLIST.has(clubId);
+    btn.classList.toggle('active', active);
+    btn.title = active ? 'Remove from wishlist' : 'Add to wishlist';
+    const icon = active ? '⚑' : '⚐';
+    btn.innerHTML = btn.dataset.label ? `${icon} <span>${btn.dataset.label}</span>` : icon;
   });
 }
 
@@ -1348,6 +1398,8 @@ function buildAccountView() {
   }
   // Favourites
   buildFavouritesSection();
+  // Wishlist
+  buildWishlistSection();
   // My ratings
   buildMyRatingsSection();
 }
@@ -1383,9 +1435,47 @@ async function removeFavourite(clubId, e) {
   await sb.from('favourites').delete().eq('club_id', clubId).eq('user_id', CURRENT_USER.id);
   USER_FAVOURITES.delete(clubId);
   document.querySelectorAll(`.fav-btn[data-club-id="${clubId}"]`).forEach(btn => {
-    btn.classList.remove('active'); btn.innerHTML = '♡';
+    btn.classList.remove('active');
+    btn.innerHTML = btn.dataset.label ? `♡ <span>${btn.dataset.label}</span>` : '♡';
   });
   buildFavouritesSection();
+}
+
+function buildWishlistSection() {
+  const grid = document.getElementById('wishlist-grid');
+  const label = document.getElementById('wishlist-count-label');
+  const wishClubs = ALL_CLUBS.filter(c => USER_WISHLIST.has(c.id));
+  label.textContent = wishClubs.length ? `${wishClubs.length} saved` : '';
+  if (!wishClubs.length) {
+    grid.innerHTML = '<div class="account-empty">No grounds on your wishlist yet — tap the flag icon on a club to add one.</div>';
+    return;
+  }
+  grid.innerHTML = '';
+  wishClubs.forEach(raw => {
+    const c = N(raw);
+    const card = document.createElement('div'); card.className = 'fav-card';
+    card.innerHTML = `
+      <button class="fav-remove" title="Remove" onclick="removeWishlist(${c.id},event)">×</button>
+      <div class="fav-card-name">${c.name}</div>
+      <div class="fav-card-meta">${c.town||''}${c.county?', '+c.county:''}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+        <div class="fav-card-score">${c.rating!=null?parseFloat(c.rating).toFixed(1):'—'}</div>
+        <div class="step-badge" style="font-size:9px">Step ${c.step}</div>
+      </div>`;
+    card.addEventListener('click', () => showClub(raw));
+    grid.appendChild(card);
+  });
+}
+
+async function removeWishlist(clubId, e) {
+  e.stopPropagation();
+  await sb.from('wishlist').delete().eq('club_id', clubId).eq('user_id', CURRENT_USER.id);
+  USER_WISHLIST.delete(clubId);
+  document.querySelectorAll(`.wish-btn[data-club-id="${clubId}"]`).forEach(btn => {
+    btn.classList.remove('active');
+    btn.innerHTML = btn.dataset.label ? `⚐ <span>${btn.dataset.label}</span>` : '⚐';
+  });
+  buildWishlistSection();
 }
 
 function buildMyRatingsSection() {
@@ -1585,6 +1675,7 @@ function buildCard(raw, distKm) {
   div.style.background=`linear-gradient(135deg,${c.colours.primary} 30%,color-mix(in srgb,${c.colours.primary} 30%,${c.colours.secondary} 70%) 100%)`; div.style.color=tc; div.style.boxShadow=`0 4px 16px ${c.colours.primary}33`;
   const pills=[...(c.highlights||[]),...ratingPills(c)];
   const isFav = USER_FAVOURITES.has(c.id);
+  const isWish = USER_WISHLIST.has(c.id);
   const distStr = distKm != null ? (distKm < 1 ? Math.round(distKm*1000)+'m' : distKm.toFixed(1)+' km') : null;
   div.innerHTML=`<div class="card-stripe" style="background:linear-gradient(90deg,${c.colours.primary} 50%,${c.colours.secondary} 50%)"></div>
     <div class="card-body">
@@ -1597,7 +1688,7 @@ function buildCard(raw, distKm) {
         <div class="card-meta-row"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${c.town||''}${c.county?', '+c.county:''}${distStr!=null?` <span class="card-dist">(${distStr})</span>`:''}</div>
       </div>
       ${pills.length?`<div class="card-pills">${pills.slice(0,3).map(p=>`<span class="card-pill">${p}</span>`).join('')}</div>`:''}
-      <div class="card-footer">${c.groundsharePartner?'<span class="gs-badge">Groundshare</span>':'<span></span>'}<div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><div class="step-badge">Step ${c.step}</div><button class="fav-btn ${isFav?'active':''}" data-club-id="${c.id}" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)">${isFav?'♥':'♡'}</button></div></div>
+      <div class="card-footer">${c.groundsharePartner?'<span class="gs-badge">Groundshare</span>':'<span></span>'}<div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><div class="step-badge">Step ${c.step}</div><button class="fav-btn ${isFav?'active':''}" data-club-id="${c.id}" title="${isFav?'Remove from favourites':'Add to favourites'}" onclick="toggleFavourite(${c.id},event)">${isFav?'♥':'♡'}</button><button class="wish-btn ${isWish?'active':''}" data-club-id="${c.id}" title="${isWish?'Remove from wishlist':'Add to wishlist'}" onclick="toggleWishlist(${c.id},event)">${isWish?'⚑':'⚐'}</button></div></div>
     </div>`;
   div.addEventListener('mouseenter',()=>{div.style.transform='translateY(-4px)';div.style.boxShadow=`0 16px 40px ${c.colours.primary}55`;});
   div.addEventListener('mouseleave',()=>{div.style.transform='translateY(0)';div.style.boxShadow=`0 4px 16px ${c.colours.primary}33`;});
