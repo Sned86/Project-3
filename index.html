@@ -779,6 +779,7 @@ const HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_A
 
 /* ── Auth state ── */
 let CURRENT_USER = null;
+let ACCESS_TOKEN = null;         // raw JWT — used for all authenticated fetch() calls
 let USER_FAVOURITES = new Set(); // club ids
 let USER_WISHLIST = new Set();   // club ids — "intend to visit"
 let USER_RATINGS = {};           // club_id -> {location,friendliness,food,facilities}
@@ -787,8 +788,9 @@ let USER_POSTCODE = null;
 /* ── Auth init ── */
 sb.auth.onAuthStateChange(async (event, session) => {
   CURRENT_USER = session?.user || null;
+  ACCESS_TOKEN = session?.access_token || null;
   updateNavAuth();
-  if (CURRENT_USER) {
+  if (CURRENT_USER && ACCESS_TOKEN) {
     await Promise.all([loadFavourites(), loadWishlist(), loadMyRatings(), loadUserProfile()]);
     updateDistPostcodeRow();
     renderGrid(); // re-render cards to show heart states
@@ -897,7 +899,26 @@ async function signUpEmail() {
 }
 
 async function signOut() {
-  await sb.auth.signOut();
+  try {
+    if (ACCESS_TOKEN) {
+      await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}` }
+      });
+    }
+  } catch(e) {}
+  // Clear the stored session from localStorage
+  const lsKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+  if (lsKey) localStorage.removeItem(lsKey);
+  CURRENT_USER = null;
+  ACCESS_TOKEN = null;
+  USER_FAVOURITES = new Set();
+  USER_WISHLIST = new Set();
+  USER_RATINGS = {};
+  USER_POSTCODE = null;
+  updateNavAuth();
+  updateDistPostcodeRow();
+  renderGrid();
   showView('home');
 }
 
@@ -1252,9 +1273,14 @@ async function loadClubs() {
 
 /* ── Favourites ── */
 async function loadFavourites() {
-  if (!CURRENT_USER) return;
-  const { data, error } = await sb.from('favourites').select('club_id');
-  if (!error && data) USER_FAVOURITES = new Set(data.map(r => r.club_id));
+  if (!CURRENT_USER || !ACCESS_TOKEN) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/favourites?select=club_id`, {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}` }
+  });
+  if (res.ok) {
+    const data = await res.json();
+    USER_FAVOURITES = new Set(data.map(r => r.club_id));
+  }
 }
 
 async function toggleFavourite(clubId, e) {
@@ -1262,10 +1288,17 @@ async function toggleFavourite(clubId, e) {
   if (!CURRENT_USER) { openAuth('signin'); return; }
   const isFav = USER_FAVOURITES.has(clubId);
   if (isFav) {
-    await sb.from('favourites').delete().eq('club_id', clubId).eq('user_id', CURRENT_USER.id);
+    await fetch(`${SUPABASE_URL}/rest/v1/favourites?club_id=eq.${clubId}&user_id=eq.${CURRENT_USER.id}`, {
+      method: 'DELETE',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}` }
+    });
     USER_FAVOURITES.delete(clubId);
   } else {
-    await sb.from('favourites').insert({ club_id: clubId, user_id: CURRENT_USER.id });
+    await fetch(`${SUPABASE_URL}/rest/v1/favourites`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ club_id: clubId, user_id: CURRENT_USER.id })
+    });
     USER_FAVOURITES.add(clubId);
   }
   // Update all heart buttons for this club (card + club page variants)
@@ -1280,9 +1313,14 @@ async function toggleFavourite(clubId, e) {
 
 /* ── Wishlist ("intend to visit") ── */
 async function loadWishlist() {
-  if (!CURRENT_USER) return;
-  const { data, error } = await sb.from('wishlist').select('club_id');
-  if (!error && data) USER_WISHLIST = new Set(data.map(r => r.club_id));
+  if (!CURRENT_USER || !ACCESS_TOKEN) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/wishlist?select=club_id`, {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}` }
+  });
+  if (res.ok) {
+    const data = await res.json();
+    USER_WISHLIST = new Set(data.map(r => r.club_id));
+  }
 }
 
 async function toggleWishlist(clubId, e) {
@@ -1290,10 +1328,17 @@ async function toggleWishlist(clubId, e) {
   if (!CURRENT_USER) { openAuth('signin'); return; }
   const isWish = USER_WISHLIST.has(clubId);
   if (isWish) {
-    await sb.from('wishlist').delete().eq('club_id', clubId).eq('user_id', CURRENT_USER.id);
+    await fetch(`${SUPABASE_URL}/rest/v1/wishlist?club_id=eq.${clubId}&user_id=eq.${CURRENT_USER.id}`, {
+      method: 'DELETE',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}` }
+    });
     USER_WISHLIST.delete(clubId);
   } else {
-    await sb.from('wishlist').insert({ club_id: clubId, user_id: CURRENT_USER.id });
+    await fetch(`${SUPABASE_URL}/rest/v1/wishlist`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ club_id: clubId, user_id: CURRENT_USER.id })
+    });
     USER_WISHLIST.add(clubId);
   }
   // Update all flag buttons for this club (card + club page variants)
@@ -1308,9 +1353,12 @@ async function toggleWishlist(clubId, e) {
 
 /* ── My Ratings ── */
 async function loadMyRatings() {
-  if (!CURRENT_USER) return;
-  const { data, error } = await sb.from('ratings').select('*').eq('user_id', CURRENT_USER.id);
-  if (!error && data) {
+  if (!CURRENT_USER || !ACCESS_TOKEN) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/ratings?select=*&user_id=eq.${CURRENT_USER.id}`, {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}` }
+  });
+  if (res.ok) {
+    const data = await res.json();
     USER_RATINGS = {};
     data.forEach(r => { USER_RATINGS[r.club_id] = r; });
   }
@@ -1337,10 +1385,18 @@ async function savePostcode() {
     const data = await res.json();
     if (data.status !== 200) throw new Error('Invalid postcode');
     const { latitude, longitude } = data.result;
-    // Save to user metadata
-    await sb.auth.updateUser({ data: { postcode: pc, lat: latitude, lng: longitude } });
+    // Save to user metadata via raw fetch
+    const updateRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: { postcode: pc, lat: latitude, lng: longitude } })
+    });
+    if (!updateRes.ok) throw new Error('Could not save postcode');
     USER_POSTCODE = pc;
-    CURRENT_USER.user_metadata = { ...CURRENT_USER.user_metadata, postcode: pc, lat: latitude, lng: longitude };
+    if (!CURRENT_USER.user_metadata) CURRENT_USER.user_metadata = {};
+    CURRENT_USER.user_metadata.postcode = pc;
+    CURRENT_USER.user_metadata.lat = latitude;
+    CURRENT_USER.user_metadata.lng = longitude;
     renderNearbyGrounds(latitude, longitude);
   } catch(err) {
     alert('Could not look up that postcode. Please check and try again.');
@@ -1432,7 +1488,10 @@ function buildFavouritesSection() {
 
 async function removeFavourite(clubId, e) {
   e.stopPropagation();
-  await sb.from('favourites').delete().eq('club_id', clubId).eq('user_id', CURRENT_USER.id);
+  await fetch(`${SUPABASE_URL}/rest/v1/favourites?club_id=eq.${clubId}&user_id=eq.${CURRENT_USER.id}`, {
+    method: 'DELETE',
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}` }
+  });
   USER_FAVOURITES.delete(clubId);
   document.querySelectorAll(`.fav-btn[data-club-id="${clubId}"]`).forEach(btn => {
     btn.classList.remove('active');
@@ -1469,7 +1528,10 @@ function buildWishlistSection() {
 
 async function removeWishlist(clubId, e) {
   e.stopPropagation();
-  await sb.from('wishlist').delete().eq('club_id', clubId).eq('user_id', CURRENT_USER.id);
+  await fetch(`${SUPABASE_URL}/rest/v1/wishlist?club_id=eq.${clubId}&user_id=eq.${CURRENT_USER.id}`, {
+    method: 'DELETE',
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}` }
+  });
   USER_WISHLIST.delete(clubId);
   document.querySelectorAll(`.wish-btn[data-club-id="${clubId}"]`).forEach(btn => {
     btn.classList.remove('active');
@@ -2129,20 +2191,26 @@ function reattachStarHandlers(key, tc) {
 }
 
 async function submitRating(clubId) {
-  if (!CURRENT_USER) return;
+  if (!CURRENT_USER || !ACCESS_TOKEN) return;
   const { location, friendliness, food, facilities } = MODAL_RATING_STATE;
   if (!location || !friendliness || !food || !facilities) {
     alert('Please rate all four categories before submitting.'); return;
   }
   const btn = document.getElementById('rating-submit-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-  const { error } = await sb.from('ratings').upsert({
-    club_id: clubId,
-    user_id: CURRENT_USER.id,
-    location, friendliness, food, facilities
-  }, { onConflict: 'user_id,club_id' });
-  if (error) {
-    alert('Could not save rating: ' + error.message);
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/ratings`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates'
+    },
+    body: JSON.stringify({ club_id: clubId, user_id: CURRENT_USER.id, location, friendliness, food, facilities })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert('Could not save rating: ' + (err.message || res.status));
     if (btn) { btn.disabled = false; btn.textContent = 'Submit rating'; }
     return;
   }
