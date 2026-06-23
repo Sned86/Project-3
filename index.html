@@ -319,15 +319,14 @@
     .postcode-hint { font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 8px; line-height: 1.5; }
     /* Nearby list */
     .nearby-list { display: flex; flex-direction: column; gap: 8px; }
-    .nearby-row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: filter 0.18s, transform 0.18s; border: none; }
-    .nearby-row:hover { filter: brightness(1.1); transform: translateY(-1px); }
-    .nearby-badge { width: 36px; height: 36px; min-width: 36px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 1px 4px rgba(0,0,0,0.3)); display: block; }
-    .nearby-badge-init { width: 36px; height: 36px; min-width: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; letter-spacing: -0.02em; flex-shrink: 0; background: rgba(0,0,0,0.18); }
-    .nearby-name { font-size: 14px; font-weight: 700; flex: 1; line-height: 1.25; }
-    .nearby-meta { font-size: 12px; opacity: 0.65; white-space: nowrap; }
-    .nearby-dist { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; white-space: nowrap; opacity: 0.85; }
+    .nearby-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; cursor: pointer; transition: background 0.18s; }
+    .nearby-row:hover { background: rgba(255,255,255,0.06); }
+    .nearby-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .nearby-name { font-size: 14px; font-weight: 700; flex: 1; }
+    .nearby-meta { font-size: 12px; color: rgba(255,255,255,0.38); }
+    .nearby-dist { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: rgba(255,255,255,0.7); white-space: nowrap; }
     /* Favourites */
-    .fav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .fav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
     .fav-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 16px; cursor: pointer; transition: all 0.18s; display: flex; flex-direction: column; gap: 8px; position: relative; }
     .fav-card:hover { background: rgba(255,255,255,0.07); transform: translateY(-2px); }
     .fav-card-name { font-size: 14px; font-weight: 700; line-height: 1.3; }
@@ -1306,6 +1305,8 @@ async function toggleFavourite(clubId, e) {
     const icon = active ? '♥' : '♡';
     btn.innerHTML = btn.dataset.label ? `${icon} <span>${btn.dataset.label}</span>` : icon;
   });
+  // Rebuild account section if currently visible so the card appears/disappears
+  if (document.getElementById('view-account').classList.contains('active')) buildFavouritesSection();
 }
 
 /* ── Wishlist ("intend to visit") ── */
@@ -1346,6 +1347,8 @@ async function toggleWishlist(clubId, e) {
     const icon = active ? '⚑' : '⚐';
     btn.innerHTML = btn.dataset.label ? `${icon} <span>${btn.dataset.label}</span>` : icon;
   });
+  // Rebuild account section if currently visible so the card appears/disappears
+  if (document.getElementById('view-account').classList.contains('active')) buildWishlistSection();
 }
 
 /* ── My Ratings ── */
@@ -1424,15 +1427,9 @@ function renderNearbyGrounds(userLat, userLng) {
   container.innerHTML = '';
   withDist.forEach(raw => {
     const c = N(raw);
-    const tc = isLight(c.colours.primary) ? '#111' : '#fff';
     const distStr = raw.dist < 1 ? `${Math.round(raw.dist * 1000)}m` : `${raw.dist.toFixed(1)} km`;
-    const badgeHTML = c.badgeUrl
-      ? `<img src="${c.badgeUrl}" class="nearby-badge" alt="">`
-      : `<div class="nearby-badge-init" style="color:${tc}">${ini(c.name)}</div>`;
     const row = document.createElement('div'); row.className = 'nearby-row';
-    row.style.background = `linear-gradient(135deg,${c.colours.primary} 30%,color-mix(in srgb,${c.colours.primary} 30%,${c.colours.secondary} 70%) 100%)`;
-    row.style.color = tc;
-    row.innerHTML = `${badgeHTML}
+    row.innerHTML = `<div class="nearby-dot" style="background:${c.colours.primary}"></div>
       <div class="nearby-name">${c.name}</div>
       <div class="nearby-meta">${c.town||''}${c.county?', '+c.county:''}</div>
       <div class="nearby-dist">${distStr}</div>`;
@@ -1473,20 +1470,7 @@ function buildFavouritesSection() {
     return;
   }
   grid.innerHTML = '';
-  favClubs.forEach(raw => {
-    const c = N(raw);
-    const card = document.createElement('div'); card.className = 'fav-card';
-    card.innerHTML = `
-      <button class="fav-remove" title="Remove" onclick="removeFavourite(${c.id},event)">×</button>
-      <div class="fav-card-name">${c.name}</div>
-      <div class="fav-card-meta">${c.town||''}${c.county?', '+c.county:''}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
-        <div class="fav-card-score">${c.rating!=null?parseFloat(c.rating).toFixed(1):'—'}</div>
-        <div class="step-badge" style="font-size:9px">Step ${c.step}</div>
-      </div>`;
-    card.addEventListener('click', () => showClub(raw));
-    grid.appendChild(card);
-  });
+  favClubs.forEach(raw => grid.appendChild(buildCard(raw, null)));
 }
 
 async function removeFavourite(clubId, e) {
@@ -1513,20 +1497,7 @@ function buildWishlistSection() {
     return;
   }
   grid.innerHTML = '';
-  wishClubs.forEach(raw => {
-    const c = N(raw);
-    const card = document.createElement('div'); card.className = 'fav-card';
-    card.innerHTML = `
-      <button class="fav-remove" title="Remove" onclick="removeWishlist(${c.id},event)">×</button>
-      <div class="fav-card-name">${c.name}</div>
-      <div class="fav-card-meta">${c.town||''}${c.county?', '+c.county:''}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
-        <div class="fav-card-score">${c.rating!=null?parseFloat(c.rating).toFixed(1):'—'}</div>
-        <div class="step-badge" style="font-size:9px">Step ${c.step}</div>
-      </div>`;
-    card.addEventListener('click', () => showClub(raw));
-    grid.appendChild(card);
-  });
+  wishClubs.forEach(raw => grid.appendChild(buildCard(raw, null)));
 }
 
 async function removeWishlist(clubId, e) {
