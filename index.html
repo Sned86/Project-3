@@ -771,7 +771,8 @@
 const { createClient } = supabase;
 const sb = createClient(
   'https://huokcisnlcaezqcroyon.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1b2tjaXNubGNhZXpxY3JveW9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTQ4NjMsImV4cCI6MjA4OTQ5MDg2M30.1tQXmVHyBWpyF4V7yD4sb5JiCDeKmgSBfnaJzp_Qjv8'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1b2tjaXNubGNhZXpxY3JveW9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTQ4NjMsImV4cCI6MjA4OTQ5MDg2M30.1tQXmVHyBWpyF4V7yD4sb5JiCDeKmgSBfnaJzp_Qjv8',
+  { auth: { flowType: 'implicit' } }
 );
 const SUPABASE_URL      = 'https://huokcisnlcaezqcroyon.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1b2tjaXNubGNhZXpxY3JveW9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTQ4NjMsImV4cCI6MjA4OTQ5MDg2M30.1tQXmVHyBWpyF4V7yD4sb5JiCDeKmgSBfnaJzp_Qjv8';
@@ -864,7 +865,7 @@ function clearAuthMsg() {
 async function signInWithGoogle() {
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo: window.location.origin + window.location.pathname }
   });
   if (error) showAuthMsg(error.message);
 }
@@ -899,14 +900,9 @@ async function signUpEmail() {
 }
 
 async function signOut() {
-  try {
-    if (ACCESS_TOKEN) {
-      await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
-        method: 'POST',
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}` }
-      });
-    }
-  } catch(e) {}
+  // Fire SDK signOut without awaiting — it may hang, but calling it gives the SDK
+  // a chance to clear its internal session state before we do manual cleanup
+  sb.auth.signOut().catch(() => {});
   // Clear the stored session from localStorage
   const lsKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
   if (lsKey) localStorage.removeItem(lsKey);
