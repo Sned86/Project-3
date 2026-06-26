@@ -349,6 +349,44 @@
     /* Profile settings */
     .settings-grid { display: grid; gap: 14px; }
 
+    /* ══════════════════════ SETTINGS MODAL ══════════════════════ */
+    #settings-overlay { display: none; position: fixed; inset: 0; z-index: 450; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(6px); }
+    #settings-overlay.open { display: flex; }
+    #settings-box { background: #221F1A; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; width: 100%; max-width: 440px; position: relative; box-shadow: 0 32px 80px rgba(0,0,0,0.6); overflow: hidden; }
+    #settings-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.08); border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 18px; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+    #settings-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .settings-header { padding: 28px 28px 20px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .settings-title { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; padding-right: 32px; }
+    .settings-body { padding: 6px 0 8px; max-height: calc(100vh - 160px); overflow-y: auto; }
+    .settings-section { padding: 18px 28px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .settings-section:last-child { border-bottom: none; }
+    .settings-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.28); margin-bottom: 14px; }
+    .settings-field { margin-bottom: 10px; }
+    .settings-field:last-child { margin-bottom: 0; }
+    .settings-input-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); margin-bottom: 6px; display: block; text-transform: uppercase; }
+    .settings-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 14px; outline: none; font-family: 'DM Sans', sans-serif; transition: border-color 0.2s; }
+    .settings-input:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.08); }
+    .settings-input::placeholder { color: rgba(255,255,255,0.2); }
+    .settings-btn { padding: 10px 18px; background: rgba(255,255,255,0.9); color: #1A1814; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; }
+    .settings-btn:hover { background: #fff; }
+    .settings-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .settings-btn-ghost { padding: 10px 18px; background: transparent; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.55); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; }
+    .settings-btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+    .settings-row { display: flex; align-items: center; gap: 10px; }
+    .settings-msg { font-size: 12px; padding: 8px 11px; border-radius: 6px; margin-top: 10px; display: none; }
+    .settings-msg.error { background: rgba(220,50,50,0.15); border: 1px solid rgba(220,50,50,0.3); color: #ff8080; display: block; }
+    .settings-msg.success { background: rgba(50,200,100,0.12); border: 1px solid rgba(50,200,100,0.25); color: #6ddfaa; display: block; }
+    /* Distance unit toggle */
+    .dist-unit-toggle { display: flex; gap: 0; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.12); }
+    .dist-unit-opt { flex: 1; padding: 9px 0; text-align: center; font-size: 13px; font-weight: 700; cursor: pointer; border: none; background: none; color: rgba(255,255,255,0.38); font-family: 'DM Sans', sans-serif; transition: all 0.18s; }
+    .dist-unit-opt.active { background: rgba(255,255,255,0.12); color: #fff; }
+    .dist-unit-opt:hover:not(.active) { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); }
+    #settings-sort-toggle .dist-unit-opt { font-size: 12px; padding: 9px 4px; }
+    .dist-unit-hint { font-size: 11px; color: rgba(255,255,255,0.28); margin-top: 8px; line-height: 1.5; }
+    /* Gear button in account hero */
+    .account-settings-btn { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s; flex-shrink: 0; }
+    .account-settings-btn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.25); }
+
     /* ── Favourite heart + Wishlist flag buttons on cards ── */
     .fav-btn, .wish-btn { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; width: 30px; height: 30px; min-width: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s; font-size: 14px; flex-shrink: 0; }
     .fav-btn:hover, .wish-btn:hover { background: rgba(0,0,0,0.35); border-color: rgba(255,255,255,0.3); }
@@ -714,6 +752,9 @@
         <div class="account-hero-name" id="account-hero-name">—</div>
         <div class="account-hero-email" id="account-hero-email">—</div>
       </div>
+      <button class="account-settings-btn" onclick="openSettings()" title="Account settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
       <button class="account-signout" onclick="signOut()">Sign out</button>
     </div>
 
@@ -740,6 +781,78 @@
       <div id="wishlist-grid" class="fav-grid"></div>
     </div>
 
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SETTINGS MODAL
+══════════════════════════════════ -->
+<div id="settings-overlay">
+  <div id="settings-box">
+    <button id="settings-close" onclick="closeSettings()">×</button>
+    <div class="settings-header">
+      <div class="settings-title">Account Settings</div>
+    </div>
+    <div class="settings-body">
+
+      <!-- Display name -->
+      <div class="settings-section">
+        <div class="settings-section-label">Display name</div>
+        <div class="settings-field">
+          <div class="settings-row">
+            <input id="settings-name-input" class="settings-input" type="text" placeholder="Your name" />
+            <button class="settings-btn" id="settings-name-btn" onclick="saveDisplayName()">Save</button>
+          </div>
+          <div class="settings-msg" id="settings-name-msg"></div>
+        </div>
+      </div>
+
+      <!-- Distance units -->
+      <div class="settings-section">
+        <div class="settings-section-label">Distance units</div>
+        <div class="dist-unit-toggle">
+          <button class="dist-unit-opt" id="dist-unit-km"  onclick="setDistUnit('km')">Kilometres (km)</button>
+          <button class="dist-unit-opt" id="dist-unit-mi"  onclick="setDistUnit('miles')">Miles (mi)</button>
+        </div>
+        <div class="dist-unit-hint">Applies to distances on club cards, nearby grounds, and the distance sort.</div>
+      </div>
+
+      <!-- Home postcode -->
+      <div class="settings-section">
+        <div class="settings-section-label">Home postcode</div>
+        <div class="settings-field">
+          <div class="settings-row">
+            <input id="settings-postcode-input" class="settings-input" type="text" placeholder="e.g. PR5 6AY" maxlength="8" style="text-transform:uppercase;max-width:160px" />
+            <button class="settings-btn" id="settings-postcode-btn" onclick="savePostcodeFromSettings()">Save</button>
+          </div>
+          <div class="settings-msg" id="settings-postcode-msg"></div>
+          <div class="dist-unit-hint" style="margin-top:8px">Used to find nearby grounds and sort clubs by distance.</div>
+        </div>
+      </div>
+
+      <!-- Default sort -->
+      <div class="settings-section">
+        <div class="settings-section-label">Default sort order</div>
+        <div class="dist-unit-toggle" id="settings-sort-toggle">
+          <button class="dist-unit-opt" data-sort="name-asc"  onclick="setDefaultSort('name-asc')">A–Z</button>
+          <button class="dist-unit-opt" data-sort="step-asc"  onclick="setDefaultSort('step-asc')">Step ↑</button>
+          <button class="dist-unit-opt" data-sort="step-desc" onclick="setDefaultSort('step-desc')">Step ↓</button>
+          <button class="dist-unit-opt" data-sort="distance"  onclick="setDefaultSort('distance')">Distance</button>
+        </div>
+        <div class="dist-unit-hint">Applied when you open the Clubs view and when you clear filters.</div>
+      </div>
+
+      <!-- Change password -->
+      <div class="settings-section">
+        <div class="settings-section-label">Password</div>
+        <div class="settings-field">
+          <p style="font-size:13px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:12px">We'll send a password reset link to <strong id="settings-email-display" style="color:rgba(255,255,255,0.7)"></strong></p>
+          <button class="settings-btn-ghost" id="settings-pw-btn" onclick="sendPasswordReset()">Send reset email</button>
+          <div class="settings-msg" id="settings-pw-msg"></div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -783,6 +896,8 @@ let USER_FAVOURITES = new Set(); // club ids
 let USER_WISHLIST = new Set();   // club ids — "intend to visit"
 let USER_RATINGS = {};           // club_id -> {location,friendliness,food,facilities}
 let USER_POSTCODE = null;
+let USER_DIST_UNIT = 'miles';      // 'km' or 'miles' — stored in user metadata; defaults to miles
+let USER_DEFAULT_SORT = 'name-asc'; // default sort for Clubs view — stored in user metadata
 
 /* ── Auth init ── */
 sb.auth.onAuthStateChange(async (event, session) => {
@@ -930,6 +1045,10 @@ function showView(name, pushState = true) {
   if (b) b.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (name === 'account') buildAccountView();
+  // Apply default sort when entering the Clubs view (only if no explicit sort already active)
+  if (name === 'clubs' && activeSort === 'name-asc' && USER_DEFAULT_SORT !== 'name-asc') {
+    setSort(USER_DEFAULT_SORT);
+  }
   // Clear ?club= param when navigating away from club page
   if (name !== 'club' && pushState) {
     const url = new URL(window.location);
@@ -1154,7 +1273,7 @@ function renderClubAmenities(results) {
     if (!items || !items.length) return;
     any = true;
     const rows = items.map(item => {
-      const d = item.dist < 0.1 ? Math.round(item.dist * 1000) + 'm' : item.dist.toFixed(1) + ' km';
+      const d = fmtDist(item.dist);
       const icon = item.trainType ? stationIcon(item.trainType) : '';
       const hasCoords = item.lat && item.lng;
       const clickAttr = hasCoords
@@ -1361,8 +1480,10 @@ async function loadMyRatings() {
 /* ── User profile (postcode) ── */
 async function loadUserProfile() {
   if (!CURRENT_USER) return;
-  // We'll store postcode in user metadata
+  // We'll store postcode and preferences in user metadata
   USER_POSTCODE = CURRENT_USER.user_metadata?.postcode || null;
+  USER_DIST_UNIT = CURRENT_USER.user_metadata?.dist_unit || 'miles';
+  USER_DEFAULT_SORT = CURRENT_USER.user_metadata?.default_sort || 'name-asc';
   if (document.getElementById('postcode-input')) {
     document.getElementById('postcode-input').value = USER_POSTCODE || '';
   }
@@ -1406,6 +1527,15 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// Format a distance in km according to USER_DIST_UNIT preference
+function fmtDist(km) {
+  if (USER_DIST_UNIT === 'miles') {
+    const mi = km * 0.621371;
+    return mi < 0.1 ? `${Math.round(mi * 1760)} yd` : `${mi.toFixed(1)} mi`;
+  }
+  return km < 0.1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
 function renderNearbyGrounds(userLat, userLng) {
   const container = document.getElementById('nearby-list');
   if (!container) return;
@@ -1422,7 +1552,7 @@ function renderNearbyGrounds(userLat, userLng) {
   withDist.forEach(raw => {
     const c = N(raw);
     const tc = isLight(c.colours.primary) ? '#111' : '#fff';
-    const distStr = raw.dist < 1 ? `${Math.round(raw.dist * 1000)}m` : `${raw.dist.toFixed(1)} km`;
+    const distStr = fmtDist(raw.dist);
     const badgeHTML = c.badgeUrl
       ? `<img src="${c.badgeUrl}" class="nearby-badge" alt="">`
       : `<div class="nearby-badge-init" style="color:${tc}">${ini(c.name)}</div>`;
@@ -1572,6 +1702,163 @@ function updateStats() {
   document.getElementById('home-stat-clubs').textContent   = ALL_CLUBS.length || '—';
   document.getElementById('home-stat-leagues').textContent = leagues.size || '—';
 }
+
+/* ── Settings modal ── */
+function openSettings() {
+  if (!CURRENT_USER) return;
+  // Populate fields from current state
+  const name = CURRENT_USER.user_metadata?.full_name || '';
+  document.getElementById('settings-name-input').value = name;
+  document.getElementById('settings-email-display').textContent = CURRENT_USER.email || '';
+  // Home postcode
+  document.getElementById('settings-postcode-input').value = USER_POSTCODE || '';
+  // Distance unit toggle
+  document.getElementById('dist-unit-km').classList.toggle('active', USER_DIST_UNIT === 'km');
+  document.getElementById('dist-unit-mi').classList.toggle('active', USER_DIST_UNIT === 'miles');
+  // Default sort toggle
+  document.querySelectorAll('#settings-sort-toggle .dist-unit-opt').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.sort === USER_DEFAULT_SORT);
+  });
+  // Clear any previous messages
+  ['settings-name-msg','settings-postcode-msg','settings-pw-msg'].forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'settings-msg'; el.textContent = '';
+  });
+  document.getElementById('settings-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function showSettingsMsg(id, text, type = 'error') {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'settings-msg ' + type;
+}
+
+async function saveDisplayName() {
+  if (!CURRENT_USER || !ACCESS_TOKEN) return;
+  const name = document.getElementById('settings-name-input').value.trim();
+  if (!name) { showSettingsMsg('settings-name-msg', 'Please enter a display name.'); return; }
+  const btn = document.getElementById('settings-name-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: { full_name: name } })
+    });
+    if (!res.ok) throw new Error('Save failed');
+    if (!CURRENT_USER.user_metadata) CURRENT_USER.user_metadata = {};
+    CURRENT_USER.user_metadata.full_name = name;
+    // Update nav + account hero immediately
+    updateNavAuth();
+    document.getElementById('account-hero-name').textContent = name;
+    document.getElementById('account-avatar-lg').textContent = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    showSettingsMsg('settings-name-msg', 'Display name updated.', 'success');
+  } catch {
+    showSettingsMsg('settings-name-msg', 'Could not save — please try again.');
+  }
+  btn.disabled = false; btn.textContent = 'Save';
+}
+
+async function setDistUnit(unit) {
+  USER_DIST_UNIT = unit;
+  document.getElementById('dist-unit-km').classList.toggle('active', unit === 'km');
+  document.getElementById('dist-unit-mi').classList.toggle('active', unit === 'miles');
+  // Persist to user metadata if signed in
+  if (CURRENT_USER && ACCESS_TOKEN) {
+    await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: { dist_unit: unit } })
+    }).catch(() => {});
+    if (!CURRENT_USER.user_metadata) CURRENT_USER.user_metadata = {};
+    CURRENT_USER.user_metadata.dist_unit = unit;
+  }
+  // Re-render anything that shows distances
+  renderGrid();
+  const meta = CURRENT_USER?.user_metadata;
+  if (meta?.lat && meta?.lng) renderNearbyGrounds(meta.lat, meta.lng);
+}
+
+async function savePostcodeFromSettings() {
+  if (!CURRENT_USER || !ACCESS_TOKEN) return;
+  const pc = document.getElementById('settings-postcode-input').value.trim().toUpperCase();
+  if (!pc) return;
+  const btn = document.getElementById('settings-postcode-btn');
+  btn.disabled = true; btn.textContent = 'Looking up…';
+  try {
+    const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`);
+    const data = await res.json();
+    if (data.status !== 200) throw new Error('Invalid postcode');
+    const { latitude, longitude } = data.result;
+    const updateRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: { postcode: pc, lat: latitude, lng: longitude } })
+    });
+    if (!updateRes.ok) throw new Error('Could not save postcode');
+    USER_POSTCODE = pc;
+    if (!CURRENT_USER.user_metadata) CURRENT_USER.user_metadata = {};
+    CURRENT_USER.user_metadata.postcode = pc;
+    CURRENT_USER.user_metadata.lat = latitude;
+    CURRENT_USER.user_metadata.lng = longitude;
+    // Keep the account page postcode input in sync
+    const pcInput = document.getElementById('postcode-input');
+    if (pcInput) pcInput.value = pc;
+    // Re-render nearby grounds if on account page
+    renderNearbyGrounds(latitude, longitude);
+    // Re-render cards (distance sort/display may now have a location)
+    updateDistPostcodeRow();
+    renderGrid();
+    showSettingsMsg('settings-postcode-msg', `Saved — ${pc}`, 'success');
+  } catch {
+    showSettingsMsg('settings-postcode-msg', 'Invalid postcode — please check and try again.');
+  }
+  btn.disabled = false; btn.textContent = 'Save';
+}
+
+async function setDefaultSort(sort) {
+  USER_DEFAULT_SORT = sort;
+  document.querySelectorAll('#settings-sort-toggle .dist-unit-opt').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.sort === sort);
+  });
+  if (CURRENT_USER && ACCESS_TOKEN) {
+    await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: { default_sort: sort } })
+    }).catch(() => {});
+    if (!CURRENT_USER.user_metadata) CURRENT_USER.user_metadata = {};
+    CURRENT_USER.user_metadata.default_sort = sort;
+  }
+  // Apply immediately to the current Clubs view sort
+  setSort(sort);
+}
+
+async function sendPasswordReset() {
+  if (!CURRENT_USER) return;
+  const btn = document.getElementById('settings-pw-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(CURRENT_USER.email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) throw error;
+    showSettingsMsg('settings-pw-msg', 'Reset email sent — check your inbox.', 'success');
+  } catch (err) {
+    showSettingsMsg('settings-pw-msg', err.message || 'Could not send reset email.');
+  }
+  btn.disabled = false; btn.textContent = 'Send reset email';
+}
+
+document.getElementById('settings-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeSettings();
+});
 
 /* ── Normalise ── */
 function N(raw) {
@@ -1738,7 +2025,7 @@ function buildCard(raw, distKm) {
   const pills=[...(c.highlights||[]),...ratingPills(c)];
   const isFav = USER_FAVOURITES.has(c.id);
   const isWish = USER_WISHLIST.has(c.id);
-  const distStr = distKm != null ? (distKm < 1 ? Math.round(distKm*1000)+'m' : distKm.toFixed(1)+' km') : null;
+  const distStr = distKm != null ? fmtDist(distKm) : null;
   div.innerHTML=`<div class="card-stripe" style="background:linear-gradient(90deg,${c.colours.primary} 50%,${c.colours.secondary} 50%)"></div>
     <div class="card-body">
       <div class="card-header">
@@ -1876,8 +2163,8 @@ function clearAllFilters() {
   document.getElementById('search-clear').classList.remove('visible');
   activeSteps=new Set(); activeLeagues=new Set(); activeCounties=new Set();
   openLeagueGroups=new Set();
-  activeSort='name-asc';
-  document.querySelectorAll('.sort-pill').forEach(p => p.classList.toggle('active', p.dataset.sort === 'name-asc'));
+  activeSort = USER_DEFAULT_SORT;
+  document.querySelectorAll('.sort-pill').forEach(p => p.classList.toggle('active', p.dataset.sort === activeSort));
   updateDistPostcodeRow();
   buildFilterSidebar();
   updateClearFiltersBtn();
@@ -2038,7 +2325,7 @@ function renderAmenityPanel(results, tc) {
     anyResults = true;
     html += '<div class="amenity-group"><div class="amenity-group-label">' + label + '</div>' +
       items.map(item => {
-        const distStr = item.dist < 0.1 ? Math.round(item.dist*1000) + 'm' : item.dist.toFixed(1) + ' km';
+        const distStr = fmtDist(item.dist);
         const icon = item.trainType ? stationIcon(item.trainType) : '';
         return '<div class="amenity-row"><span class="amenity-name" style="display:flex;align-items:center">' + icon + item.name + '</span><span class="amenity-dist">' + distStr + '</span></div>';
       }).join('') + '</div>';
@@ -2225,7 +2512,7 @@ async function submitRating(clubId) {
 
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); document.body.style.overflow=''; }
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){ closeModal(); closeAuth(); }});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){ closeModal(); closeAuth(); closeSettings(); }});
 
 (async () => {
   await loadClubs();
