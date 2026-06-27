@@ -497,6 +497,38 @@
     /* Map section */
     .club-map-wrap { width: 100%; height: 280px; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,0.04); position: relative; }
     .club-map-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 13px; color: rgba(255,255,255,0.28); font-style: italic; }
+
+    /* ── Photo gallery strip ── */
+    .club-gallery-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
+    .club-gallery-strip::-webkit-scrollbar { height: 4px; }
+    .club-gallery-strip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+    .club-gallery-thumb { flex-shrink: 0; width: 200px; height: 140px; border-radius: 6px; overflow: hidden; cursor: pointer; position: relative; transition: transform 0.2s, opacity 0.2s; background: rgba(255,255,255,0.05); }
+    .club-gallery-thumb:hover { transform: scale(1.03); opacity: 0.92; }
+    .club-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .club-gallery-caption { position: absolute; bottom: 0; left: 0; right: 0; padding: 18px 10px 8px; background: linear-gradient(transparent, rgba(0,0,0,0.62)); font-size: 11px; color: rgba(255,255,255,0.85); line-height: 1.35; pointer-events: none; }
+
+    /* ── Lightbox ── */
+    #gallery-lightbox { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.92); align-items: center; justify-content: center; }
+    #gallery-lightbox.open { display: flex; }
+    .lightbox-inner { position: relative; max-width: min(90vw, 1100px); max-height: 90vh; display: flex; flex-direction: column; align-items: center; }
+    .lightbox-img-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+    #lightbox-img { max-width: 100%; max-height: 80vh; border-radius: 6px; display: block; object-fit: contain; box-shadow: 0 24px 80px rgba(0,0,0,0.7); }
+    .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); color: #fff; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: background 0.18s; user-select: none; flex-shrink: 0; }
+    .lightbox-nav:hover { background: rgba(0,0,0,0.75); }
+    #lightbox-prev { left: -54px; }
+    #lightbox-next { right: -54px; }
+    .lightbox-nav.hidden { opacity: 0; pointer-events: none; }
+    #lightbox-close { position: absolute; top: -44px; right: 0; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; transition: background 0.15s; }
+    #lightbox-close:hover { background: rgba(255,255,255,0.2); color: #fff; }
+    .lightbox-meta { margin-top: 12px; text-align: center; }
+    #lightbox-caption { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.5; max-width: 600px; }
+    #lightbox-counter { font-size: 11px; color: rgba(255,255,255,0.28); margin-top: 5px; letter-spacing: 0.06em; }
+    @media (max-width: 600px) {
+      #lightbox-prev { left: -8px; }
+      #lightbox-next { right: -8px; }
+      .lightbox-nav { width: 34px; height: 34px; font-size: 14px; }
+      .club-gallery-thumb { width: 160px; height: 112px; }
+    }
   </style>
 </head>
 <body>
@@ -874,6 +906,22 @@
   <div id="club-page-content"></div>
 </div>
 
+<!-- ── Photo lightbox ── -->
+<div id="gallery-lightbox">
+  <div class="lightbox-inner">
+    <button id="lightbox-close" onclick="closeGalleryLightbox()">×</button>
+    <div class="lightbox-img-wrap">
+      <button class="lightbox-nav" id="lightbox-prev" onclick="lightboxStep(-1)">‹</button>
+      <img id="lightbox-img" src="" alt="" />
+      <button class="lightbox-nav" id="lightbox-next" onclick="lightboxStep(1)">›</button>
+    </div>
+    <div class="lightbox-meta">
+      <div id="lightbox-caption"></div>
+      <div id="lightbox-counter"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ── Modal ── -->
 <div id="modal-overlay">
   <div id="modal-box">
@@ -1158,6 +1206,9 @@ function buildClubPage(c) {
       </div>
     </div>`;
 
+  // Gallery section injected asynchronously after page render
+  const galleryPlaceholder = `<div class="club-section-full" id="club-gallery-placeholder"></div>`;
+
   document.getElementById('club-page-content').innerHTML = `
     <div class="club-page-hero" style="color:${tc}">
       ${heroBgHTML}
@@ -1209,6 +1260,7 @@ function buildClubPage(c) {
       </div>
 
       ${nearbyHTML}
+      ${galleryPlaceholder}
       ${pillsHTML}
     </div>`;
 
@@ -1266,6 +1318,17 @@ function buildClubPage(c) {
       CLUB_MAP._groundLatLng = [c.lat, c.lng];
     }, 50);
   }
+
+  // Fetch photos and inject gallery section (async, non-blocking)
+  LIGHTBOX_PHOTOS = []; // reset while loading
+  fetchClubPhotos(c.id).then(photos => {
+    LIGHTBOX_PHOTOS = photos || [];
+    const placeholder = document.getElementById('club-gallery-placeholder');
+    if (!placeholder) return;
+    const html = buildGallerySection(photos);
+    if (html) placeholder.outerHTML = html;
+    else placeholder.remove();
+  });
 }
 
 function stationIcon(trainType) {
@@ -2203,9 +2266,14 @@ function updateClearFiltersBtn() {
 /* ── Modal ── */
 let MODAL_RATING_STATE = { location: 0, friendliness: 0, food: 0, facilities: 0 };
 let MODAL_CLUB_ID = null;
-const FACT_CACHE = {}; // keyed by club id
+const FACT_CACHE = {};  // amenity results keyed by club id
+const PHOTO_CACHE = {}; // photo arrays keyed by club id
 let CLUB_MAP = null;            // Leaflet map instance for current club page
 let CLUB_AMENITY_MARKER = null; // secondary marker for clicked amenity
+
+/* ── Lightbox state ── */
+let LIGHTBOX_PHOTOS = []; // current club's photo array
+let LIGHTBOX_INDEX  = 0;  // currently displayed index
 
 /* ── OSM Overpass: fetch nearby amenities ── */
 
@@ -2536,7 +2604,84 @@ async function submitRating(clubId) {
 
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); document.body.style.overflow=''; }
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){ closeModal(); closeAuth(); closeSettings(); }});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ closeModal(); closeAuth(); closeSettings(); closeGalleryLightbox(); }
+  if(e.key==='ArrowLeft')  lightboxStep(-1);
+  if(e.key==='ArrowRight') lightboxStep(1);
+});
+
+/* ══════════════════════════════════════════════════
+   PHOTO GALLERY
+══════════════════════════════════════════════════ */
+
+async function fetchClubPhotos(clubId) {
+  if (PHOTO_CACHE[clubId] !== undefined) return PHOTO_CACHE[clubId];
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/photos?club_id=eq.${clubId}&order=sort_order.asc,created_at.asc&select=id,url,caption`,
+      { headers: HEADERS }
+    );
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    PHOTO_CACHE[clubId] = data;
+    return data;
+  } catch (err) {
+    console.warn('Photo fetch failed:', err);
+    PHOTO_CACHE[clubId] = [];
+    return [];
+  }
+}
+
+function buildGallerySection(photos) {
+  if (!photos || !photos.length) return '';
+  const thumbs = photos.map((p, i) => `
+    <div class="club-gallery-thumb" onclick="openGalleryLightbox(${i})">
+      <img src="${p.url}" alt="${p.caption ? p.caption.replace(/"/g,'&quot;') : ''}" loading="lazy" />
+      ${p.caption ? `<div class="club-gallery-caption">${p.caption}</div>` : ''}
+    </div>`).join('');
+  return `
+    <div class="club-section club-section-full" id="club-gallery-section">
+      <div class="club-section-header"><div class="club-section-title">Photos</div></div>
+      <div class="club-section-body" style="padding:14px 18px 18px">
+        <div class="club-gallery-strip">${thumbs}</div>
+      </div>
+    </div>`;
+}
+
+function openGalleryLightbox(index) {
+  if (!LIGHTBOX_PHOTOS.length) return;
+  LIGHTBOX_INDEX = index;
+  renderLightboxFrame();
+  document.getElementById('gallery-lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeGalleryLightbox() {
+  document.getElementById('gallery-lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function lightboxStep(dir) {
+  if (!document.getElementById('gallery-lightbox').classList.contains('open')) return;
+  LIGHTBOX_INDEX = (LIGHTBOX_INDEX + dir + LIGHTBOX_PHOTOS.length) % LIGHTBOX_PHOTOS.length;
+  renderLightboxFrame();
+}
+
+function renderLightboxFrame() {
+  const p = LIGHTBOX_PHOTOS[LIGHTBOX_INDEX];
+  document.getElementById('lightbox-img').src = p.url;
+  document.getElementById('lightbox-img').alt = p.caption || '';
+  document.getElementById('lightbox-caption').textContent = p.caption || '';
+  document.getElementById('lightbox-counter').textContent =
+    LIGHTBOX_PHOTOS.length > 1 ? `${LIGHTBOX_INDEX + 1} / ${LIGHTBOX_PHOTOS.length}` : '';
+  document.getElementById('lightbox-prev').classList.toggle('hidden', LIGHTBOX_PHOTOS.length <= 1);
+  document.getElementById('lightbox-next').classList.toggle('hidden', LIGHTBOX_PHOTOS.length <= 1);
+}
+
+// Click backdrop to close
+document.getElementById('gallery-lightbox').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeGalleryLightbox();
+});
 
 (async () => {
   await loadClubs();
