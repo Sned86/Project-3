@@ -868,7 +868,7 @@
   <div class="club-page-back">
     <button class="club-back-btn" onclick="goBackToClubs()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15,18 9,12 15,6"/></svg>
-      Back to Clubs
+      <span>Back to Clubs</span>
     </button>
   </div>
   <div id="club-page-content"></div>
@@ -897,6 +897,7 @@ const HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_A
 /* ── Auth state ── */
 let CURRENT_USER = null;
 let ACCESS_TOKEN = null;         // raw JWT — used for all authenticated fetch() calls
+let PREV_VIEW = 'clubs';         // view the user navigated from, used by the club page back button
 let USER_FAVOURITES = new Set(); // club ids
 let USER_WISHLIST = new Set();   // club ids — "intend to visit"
 let USER_RATINGS = {};           // club_id -> {location,friendliness,food,facilities}
@@ -1063,20 +1064,29 @@ function showView(name, pushState = true) {
 }
 
 function goBackToClubs() {
-  showView('clubs');
+  showView(PREV_VIEW === 'account' ? 'account' : 'clubs');
 }
 
 /* ── Club page ── */
-function showClub(idOrRaw, pushState = true) {
+function showClub(idOrRaw, pushState = true, fromView = null) {
   const raw = typeof idOrRaw === 'object' ? idOrRaw : ALL_CLUBS.find(c => c.id === idOrRaw);
   if (!raw) return;
   const c = N(raw);
+
+  // Track where the user came from so the back button returns them there
+  if (fromView) {
+    PREV_VIEW = fromView;
+  } else {
+    // Infer from whichever view is currently active
+    const activeView = document.querySelector('.view.active');
+    PREV_VIEW = activeView ? (activeView.id.replace('view-', '') || 'clubs') : 'clubs';
+  }
 
   // Push URL state
   if (pushState) {
     const url = new URL(window.location);
     url.searchParams.set('club', c.id);
-    history.pushState({view: 'club', clubId: c.id}, '', url);
+    history.pushState({view: 'club', clubId: c.id, prevView: PREV_VIEW}, '', url);
   }
 
   buildClubPage(c);
@@ -1084,9 +1094,13 @@ function showClub(idOrRaw, pushState = true) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
   document.getElementById('view-club').classList.add('active');
-  // Highlight "Clubs" in nav as closest parent
-  const clubsBtn = document.querySelector('.nav-link[data-view="clubs"]');
-  if (clubsBtn) clubsBtn.classList.add('active');
+  // Highlight nav based on origin
+  const navTarget = PREV_VIEW === 'account' ? 'account' : 'clubs';
+  const navBtn = document.querySelector(`.nav-link[data-view="${navTarget}"]`);
+  if (navBtn) navBtn.classList.add('active');
+  // Update back button label
+  const backLabel = document.querySelector('.club-back-btn span');
+  if (backLabel) backLabel.textContent = PREV_VIEW === 'account' ? 'Back to Profile' : 'Back to Clubs';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1351,12 +1365,17 @@ function focusAmenity(lat, lng, name, rowEl) {
 }
 
 // Browser back/forward support
-window.addEventListener('popstate', () => {
+window.addEventListener('popstate', (e) => {
   const params = new URLSearchParams(window.location.search);
   const clubId = params.get('club');
   if (clubId) {
     const club = ALL_CLUBS.find(c => String(c.id) === clubId);
-    if (club) { showClub(club, false); return; }
+    if (club) {
+      // Restore PREV_VIEW from history state if available
+      if (e.state?.prevView) PREV_VIEW = e.state.prevView;
+      showClub(club, false);
+      return;
+    }
   }
   // Default to clubs view on back
   showView('clubs', false);
