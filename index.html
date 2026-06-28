@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Non-League Ground Directory</title>
-  <!-- v4.1 -->
+  <!-- v4.2 -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -446,7 +446,7 @@
     .gs-hero-note-icon { font-size: 13px; flex-shrink: 0; line-height: 1; }
 
     /* Body */
-    .club-page-body { max-width: 960px; margin: 0 auto; padding: 36px 24px 72px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .club-page-body { max-width: 960px; margin: 0 auto; padding: 36px 24px 72px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
     @media (max-width: 680px) {
       .club-page-body { grid-template-columns: 1fr; gap: 16px; padding: 24px 16px 56px; }
       .club-page-hero-inner { flex-direction: row; gap: 18px; }
@@ -1187,15 +1187,13 @@ function buildClubPage(c) {
   const tags = c.tags || [];
   const showPillsSection = allPills.length || tags.length;
 
+  // Pills rendered inline inside the Club & Ground panel (fills the gap below facts)
   const pillsHTML = showPillsSection ? `
-    <div class="club-section club-section-full">
-      <div class="club-section-header"><div class="club-section-title">About this ground</div></div>
-      <div class="club-section-body">
-        <div class="club-pills">
-          ${allPills.map(p => `<span class="club-pill-highlight">${p}</span>`).join('')}
-          ${tags.map(t => `<span class="club-pill-tag">${t}</span>`).join('')}
-        </div>
-        ${!allPills.length && !tags.length ? '<div class="club-pills-empty">No ground notes yet.</div>' : ''}
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07)">
+      <div class="club-fact-label" style="margin-bottom:8px">Ground notes</div>
+      <div class="club-pills">
+        ${allPills.map(p => `<span class="club-pill-highlight">${p}</span>`).join('')}
+        ${tags.map(t => `<span class="club-pill-tag">${t}</span>`).join('')}
       </div>
     </div>` : '';
 
@@ -1251,6 +1249,7 @@ function buildClubPage(c) {
             <div class="club-fact"><div class="club-fact-label">Capacity</div><div class="club-fact-value">${c.capacity ? c.capacity.toLocaleString() : '—'}</div></div>
             <div class="club-fact" style="grid-column:1/-1"><div class="club-fact-label">League</div><div class="club-fact-value">${c.league}</div></div>
           </div>
+          ${pillsHTML}
         </div>
       </div>
 
@@ -1270,7 +1269,6 @@ function buildClubPage(c) {
 
       ${nearbyHTML}
       ${galleryPlaceholder}
-      ${pillsHTML}
     </div>`;
 
   // Kick off amenity fetch if we have coords
